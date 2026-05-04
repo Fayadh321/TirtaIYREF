@@ -2,17 +2,13 @@ const CACHE_VERSION = "v1";
 const CACHE_NAME = `tirta-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
-
-const STATIC_ASSETS = [
-  "/",
-  "/manifest.json",
-];
+const STATIC_ASSETS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    })
+    }),
   );
   self.skipWaiting();
 });
@@ -22,12 +18,12 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            return caches.delete(cacheName);
-          }
-        })
+          return cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE
+            ? caches.delete(cacheName)
+            : Promise.resolve(false);
+        }),
       );
-    })
+    }),
   );
   self.clients.claim();
 });
@@ -64,11 +60,11 @@ self.addEventListener("fetch", (event) => {
                 status: 503,
                 statusText: "Service Unavailable",
                 headers: new Headers({ "Content-Type": "application/json" }),
-              }
+              },
             )
           );
         });
-      })
+      }),
   );
 });
 

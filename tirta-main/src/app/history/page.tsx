@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
+import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Home } from "lucide-react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { useAuth } from "@/lib/auth-context";
 
 export default function HistoryPage() {
   const { user, loading } = useAuth();
@@ -40,6 +40,7 @@ export default function HistoryPage() {
               </p>
             </div>
             <button
+              type="button"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
               onClick={() => router.push("/profile")}
             >

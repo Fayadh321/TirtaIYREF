@@ -32,7 +32,11 @@ export function PWAProvider() {
       document.head.appendChild(appleMobile);
     }
 
-    if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
+    if (
+      !document.querySelector(
+        'meta[name="apple-mobile-web-app-status-bar-style"]',
+      )
+    ) {
       const appleStatusBar = document.createElement("meta");
       appleStatusBar.name = "apple-mobile-web-app-status-bar-style";
       appleStatusBar.content = "black-translucent";

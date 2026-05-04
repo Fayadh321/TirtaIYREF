@@ -3,14 +3,21 @@
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  signOut,
   onAuthStateChanged,
-  User,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  type User,
 } from "firebase/auth";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { auth } from "@/lib/firebase";
-import { useEffect, useState, useContext, createContext, ReactNode } from "react";
 
 interface AuthContextType {
   user: User | null;
@@ -27,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const syncUser = async (currentUser: User) => {
+  const syncUser = useCallback(async (currentUser: User) => {
     if (!currentUser.email) return;
 
     await fetch("/api/auth/sync", {
@@ -42,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firebaseUID: currentUser.uid,
       }),
     });
-  };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -54,13 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [syncUser]);
 
   const register = async (email: string, password: string) => {
     const credential = await createUserWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
     await syncUser(credential.user);
   };

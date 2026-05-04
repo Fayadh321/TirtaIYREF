@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Loader, Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useState } from "react";
+import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, Loader } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,8 +29,10 @@ export default function LoginPage() {
         await register(email, password);
       }
       router.push("/home");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -43,8 +45,10 @@ export default function LoginPage() {
     try {
       await loginWithGoogle();
       router.push("/home");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -65,12 +69,19 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label
+              htmlFor="login-email"
+              className="block text-sm font-medium text-slate-700 mb-2"
+            >
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
+              <Mail
+                className="absolute left-3 top-3 text-slate-400"
+                size={20}
+              />
               <Input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -82,12 +93,19 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label
+              htmlFor="login-password"
+              className="block text-sm font-medium text-slate-700 mb-2"
+            >
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
+              <Lock
+                className="absolute left-3 top-3 text-slate-400"
+                size={20}
+              />
               <Input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -114,13 +132,13 @@ export default function LoginPage() {
           </Button>
         </form>
 
-            <div className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs uppercase tracking-wide text-slate-400">
-                or
-              </span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs uppercase tracking-wide text-slate-400">
+            or
+          </span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
 
         <Button
           type="button"

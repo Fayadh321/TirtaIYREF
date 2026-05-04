@@ -1,7 +1,7 @@
 "use client";
 
+import { Clock, Home, MapPin } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, MapPin, Clock } from "lucide-react";
 
 export function AppBottomNav() {
   const router = useRouter();
@@ -11,10 +11,11 @@ export function AppBottomNav() {
     <nav className="md:absolute md:bottom-0 md:left-1/2 md:w-full md:max-w-md md:-translate-x-1/2 md:px-5 md:pb-5 fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 px-5 pb-5">
       <div className="relative flex items-end justify-between rounded-3xl bg-white px-7 py-4 shadow-lg">
         <button
-          className={"cursor-pointer" +
+          type="button"
+          className={
             pathname === "/home"
-              ? "flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
-              : "flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
+              ? "cursor-pointer flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
+              : "cursor-pointer flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
           }
           onClick={() => router.push("/home")}
         >
@@ -23,10 +24,11 @@ export function AppBottomNav() {
         </button>
 
         <button
-          className={"cursor-pointer " +
+          type="button"
+          className={
             pathname === "/map"
-              ? "relative -mt-10 flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
-              : "relative -mt-10 flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
+              ? "cursor-pointer relative -mt-10 flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
+              : "cursor-pointer relative -mt-10 flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
           }
           onClick={() => router.push("/map")}
         >
@@ -37,10 +39,11 @@ export function AppBottomNav() {
         </button>
 
         <button
-          className={"cursor-pointer " +
+          type="button"
+          className={
             pathname === "/history"
-              ? "flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
-              : "flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
+              ? "cursor-pointer flex flex-col items-center gap-2 text-brand-600 hover:bg-brand-600/80"
+              : "cursor-pointer flex flex-col items-center gap-2 text-slate-500 hover:bg-slate-50"
           }
           onClick={() => router.push("/history")}
         >

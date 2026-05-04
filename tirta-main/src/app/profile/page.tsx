@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
+import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react"
+import { useAuth } from "@/lib/auth-context";
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
@@ -40,8 +40,8 @@ export default function ProfilePage() {
           className="bg-transparent items-center text-md hover:bg-slate-50 font-semibold text-brand-600"
           onClick={() => router.back()}
         >
-            <ChevronLeft size={16} />
-            Back
+          <ChevronLeft size={16} />
+          Back
         </Button>
 
         <div className="mt-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -67,7 +67,9 @@ export default function ProfilePage() {
               <p className="text-xs uppercase tracking-wide text-slate-400">
                 Joined
               </p>
-              <p className="mt-1 text-slate-600">{user.metadata?.creationTime}</p>
+              <p className="mt-1 text-slate-600">
+                {user.metadata?.creationTime}
+              </p>
             </div>
           </div>
 

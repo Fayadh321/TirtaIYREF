@@ -1,11 +1,11 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
+import { SlidersHorizontal, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { User, SlidersHorizontal } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth-context";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -16,7 +16,6 @@ export default function HomePage() {
       router.push("/auth/login");
     }
   }, [user, loading, router]);
-
 
   if (loading) {
     return (
@@ -39,9 +38,12 @@ export default function HomePage() {
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
                 Location
               </p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">Your Area</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">
+                Your Area
+              </p>
             </div>
             <button
+              type="button"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
               onClick={() => router.push("/profile")}
             >
@@ -56,7 +58,10 @@ export default function HomePage() {
                 className="h-12 rounded-2xl bg-white pl-4 pr-10 text-sm shadow-sm"
               />
             </div>
-            <button className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white shadow-sm">
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white shadow-sm"
+            >
               <SlidersHorizontal size={18} />
             </button>
           </div>
@@ -70,7 +75,10 @@ export default function HomePage() {
             <p className="mt-2 text-sm text-slate-500">
               Start tracking your area and share updates with the community.
             </p>
-            <button className="mt-6 inline-flex items-center justify-center rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+            <button
+              type="button"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            >
               Create report
             </button>
           </section>
