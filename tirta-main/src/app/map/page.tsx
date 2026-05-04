@@ -8,8 +8,8 @@ import { AppBottomNav } from "@/components/app-bottom-nav";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { MapActionButtons } from "./components/map-actions";
-import { MapLegend } from "./components/map-legend";
 import { MapBottomSheet } from "./components/map-bottom-sheets";
+import { MapLegend } from "./components/map-legend";
 
 const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -118,9 +118,7 @@ export default function MapPage() {
       const data = await res.json();
       setReports(data.reports ?? []);
       setZones(data.zones ?? []);
-    } catch {
-      
-    }
+    } catch {}
   }, []);
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
@@ -174,7 +172,6 @@ export default function MapPage() {
     [],
   );
 
-  // device orientation — update heading ref + cone tanpa re-render
   useEffect(() => {
     const handler = (e: DeviceOrientationEvent) => {
       const alpha = e.alpha ?? 0;
@@ -188,7 +185,7 @@ export default function MapPage() {
     return () => window.removeEventListener("deviceorientation", handler, true);
   }, []);
 
-  // recenter ke posisi user + arahkan bearing sesuai device
+  // recenter ke posisi user dan arahkan bearing sesuai device
   const handleRecenter = useCallback(() => {
     if (!map.current || !userCoords) return;
     map.current.flyTo({
@@ -228,9 +225,9 @@ export default function MapPage() {
         tileSize: 512,
         maxzoom: 14,
       });
-      map.current?.setTerrain({ 
-        source: "mapbox-dem", 
-        exaggeration: 1.2 
+      map.current?.setTerrain({
+        source: "mapbox-dem",
+        exaggeration: 1.2,
       });
       map.current?.addLayer({
         id: "sky",
@@ -245,10 +242,7 @@ export default function MapPage() {
       // fly ke posisi pertama
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const { 
-            latitude, 
-            longitude 
-          } = pos.coords;
+          const { latitude, longitude } = pos.coords;
           setUserCoords({ lat: latitude, lng: longitude });
           map.current?.flyTo({
             center: [longitude, latitude],
@@ -510,7 +504,7 @@ export default function MapPage() {
           <AppBottomNav />
         </div>
 
-        {/* bottom sheet — detail cluster */}
+        {/* bottom sheet (detail cluster) */}
         {selectedCluster && (
           <MapBottomSheet
             selectedCluster={selectedCluster}

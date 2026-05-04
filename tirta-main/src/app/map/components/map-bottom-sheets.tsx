@@ -78,7 +78,9 @@ export function MapBottomSheet({
 
       <div className="max-h-64 overflow-y-auto px-5 py-3 space-y-2.5">
         {sheetLoading ? (
-          <div className="py-8 text-center text-sm text-slate-400">Memuat...</div>
+          <div className="py-8 text-center text-sm text-slate-400">
+            Memuat...
+          </div>
         ) : clusterReports.length === 0 ? (
           <div className="py-8 text-center text-sm text-slate-400">
             Tidak ada laporan
@@ -107,7 +109,8 @@ export function MapBottomSheet({
                   {report.title ?? report.address ?? "Laporan tanpa judul"}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {report.user.name ?? "Anonim"} · {formatRelative(report.reportedAt)}
+                  {report.user.name ?? "Anonim"} ·{" "}
+                  {formatRelative(report.reportedAt)}
                 </p>
               </div>
               <ChevronRight size={16} className="text-slate-300 shrink-0" />

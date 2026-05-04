@@ -30,7 +30,10 @@ export function ZoneRiskBadge({ level }: ZoneRiskBadgeProps) {
         icon: Shield,
         className: "bg-slate-50 text-slate-500",
       },
-    } as Record<string, { label: string; icon: typeof Shield; className: string }>
+    } as Record<
+      string,
+      { label: string; icon: typeof Shield; className: string }
+    >
   )[level] ?? {
     label: level,
     icon: Shield,
