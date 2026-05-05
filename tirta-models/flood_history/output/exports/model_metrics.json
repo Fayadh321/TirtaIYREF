@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-05-05T12:09:28.844108Z",
+  "models": [
+    "xgboost",
+    "sarima",
+    "prophet",
+    "lstm"
+  ],
+  "saved_models": {
+    "xgboost": "output\\models\\xgboost_model.json"
+  },
+  "evaluation": {
+    "xgboost": {
+      "mse": 1.7121635838224734,
+      "mae": 0.3347860597668065,
+      "rmse": 1.3084966885026776,
+      "r2": 0.9855726831588397
+    }
+  },
+  "feature_columns": [
+    "risk_score_lag1",
+    "risk_score_lag2",
+    "risk_score_lag3",
+    "risk_score_lag6",
+    "month_sin",
+    "month_cos",
+    "trend",
+    "risk_score_rolling_mean_3",
+    "risk_score_rolling_std_3",
+    "risk_score_rolling_mean_6",
+    "risk_score_rolling_std_6"
+  ],
+  "forecast_horizon": 3
+}
