@@ -3,7 +3,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { RiskCategory, ZoneRiskLevel } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
+const CLOUDINARY_URL = process.env.CLOUDINARY_URL!;
 const FAST_API_URL = process.env.FAST_API_URL!;
+
+if (!CLOUDINARY_URL) {
+  throw new Error("CLOUDINARY_URL is not defined");
+}
 
 if (!FAST_API_URL) {
   throw new Error("FAST_API_URL is not defined");
