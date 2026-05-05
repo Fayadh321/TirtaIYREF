@@ -1,0 +1,286 @@
+2026-05-04 20:51:13,845 - data_preparation - INFO - Loading data from D:\Lomba\Iyref\TirtaIYREF\tirta-models\flood_history\data\groundsource_2026.parquet
+2026-05-04 20:51:17,962 - data_preparation - INFO - [OK] Loaded 2,646,302 records
+2026-05-04 20:51:17,964 - data_preparation - INFO - Extracting coordinates from geometry...
+2026-05-04 20:52:04,755 - data_preparation - INFO - [OK] Extracted 2,646,302 valid coordinates
+2026-05-04 20:52:04,756 - data_preparation - INFO - Filtering to Indonesia bounds...
+2026-05-04 20:52:05,093 - data_preparation - INFO - [OK] Indonesia events: 370,156 (14.0% of total)
+2026-05-04 20:52:05,095 - data_preparation - INFO - Validating data...
+2026-05-04 20:52:05,113 - data_preparation - INFO - [OK] Data validation complete
+2026-05-04 20:52:05,136 - geospatial_clustering - INFO - Clustering 370156 points into 10 zones...
+2026-05-04 20:52:05,151 - geospatial_clustering - INFO -   Sampling 50000 points for K-Means fitting
+2026-05-04 20:52:07,668 - geospatial_clustering - INFO - [OK] K-Means clustering complete
+2026-05-04 20:52:07,670 - geospatial_clustering - INFO - 
+============================================================
+2026-05-04 20:52:07,671 - geospatial_clustering - INFO - ZONE ANALYSIS
+2026-05-04 20:52:07,672 - geospatial_clustering - INFO - ============================================================
+2026-05-04 20:52:07,676 - geospatial_clustering - INFO - 
+Zone 0: Sumatra_South
+2026-05-04 20:52:07,678 - geospatial_clustering - INFO -   Center: (1.88, 101.67)
+2026-05-04 20:52:07,678 - geospatial_clustering - INFO -   Sample events: 5,025 (10.1%)
+2026-05-04 20:52:07,679 - geospatial_clustering - INFO -   Bounds: Lat [-0.29, 4.93]
+2026-05-04 20:52:07,680 - geospatial_clustering - INFO -           Lon [97.31, 106.24]
+2026-05-04 20:52:07,683 - geospatial_clustering - INFO - 
+Zone 1: Java_East
+2026-05-04 20:52:07,683 - geospatial_clustering - INFO -   Center: (-7.55, 112.19)
+2026-05-04 20:52:07,686 - geospatial_clustering - INFO -   Sample events: 9,701 (19.4%)
+2026-05-04 20:52:07,689 - geospatial_clustering - INFO -   Bounds: Lat [-9.03, -5.55]
+2026-05-04 20:52:07,691 - geospatial_clustering - INFO -           Lon [109.29, 117.87]
+2026-05-04 20:52:07,695 - geospatial_clustering - INFO - 
+Zone 2: Sulawesi
+2026-05-04 20:52:07,696 - geospatial_clustering - INFO -   Center: (0.50, 123.48)
+2026-05-04 20:52:07,697 - geospatial_clustering - INFO -   Sample events: 1,634 (3.3%)
+2026-05-04 20:52:07,699 - geospatial_clustering - INFO -   Bounds: Lat [-2.43, 5.79]
+2026-05-04 20:52:07,701 - geospatial_clustering - INFO -           Lon [118.12, 128.78]
+2026-05-04 20:52:07,705 - geospatial_clustering - INFO - 
+Zone 3: Java_Central
+2026-05-04 20:52:07,707 - geospatial_clustering - INFO -   Center: (-6.46, 107.15)
+2026-05-04 20:52:07,708 - geospatial_clustering - INFO -   Sample events: 12,742 (25.5%)
+2026-05-04 20:52:07,711 - geospatial_clustering - INFO -   Bounds: Lat [-10.43, -2.98]
+2026-05-04 20:52:07,713 - geospatial_clustering - INFO -           Lon [102.25, 109.72]
+2026-05-04 20:52:07,718 - geospatial_clustering - INFO - 
+Zone 4: Bali_Region
+2026-05-04 20:52:07,719 - geospatial_clustering - INFO -   Center: (-1.97, 115.00)
+2026-05-04 20:52:07,721 - geospatial_clustering - INFO -   Sample events: 4,188 (8.4%)
+2026-05-04 20:52:07,723 - geospatial_clustering - INFO -   Bounds: Lat [-4.10, 0.89]
+2026-05-04 20:52:07,726 - geospatial_clustering - INFO -           Lon [109.49, 120.00]
+2026-05-04 20:52:07,730 - geospatial_clustering - INFO - 
+Zone 5: Sumatra_South
+2026-05-04 20:52:07,732 - geospatial_clustering - INFO -   Center: (-2.08, 102.69)
+2026-05-04 20:52:07,733 - geospatial_clustering - INFO -   Sample events: 3,916 (7.8%)
+2026-05-04 20:52:07,736 - geospatial_clustering - INFO -   Bounds: Lat [-4.79, -0.01]
+2026-05-04 20:52:07,738 - geospatial_clustering - INFO -           Lon [98.72, 108.29]
+2026-05-04 20:52:07,741 - geospatial_clustering - INFO - 
+Zone 6: Sumatra_North
+2026-05-04 20:52:07,742 - geospatial_clustering - INFO -   Center: (4.39, 98.17)
+2026-05-04 20:52:07,745 - geospatial_clustering - INFO -   Sample events: 7,408 (14.8%)
+2026-05-04 20:52:07,748 - geospatial_clustering - INFO -   Bounds: Lat [2.12, 6.00]
+2026-05-04 20:52:07,750 - geospatial_clustering - INFO -           Lon [95.07, 103.23]
+2026-05-04 20:52:07,755 - geospatial_clustering - INFO - 
+Zone 7: Sulawesi
+2026-05-04 20:52:07,756 - geospatial_clustering - INFO -   Center: (-5.56, 120.66)
+2026-05-04 20:52:07,757 - geospatial_clustering - INFO -   Sample events: 2,835 (5.7%)
+2026-05-04 20:52:07,759 - geospatial_clustering - INFO -   Bounds: Lat [-10.90, -2.36]
+2026-05-04 20:52:07,762 - geospatial_clustering - INFO -           Lon [117.66, 128.75]
+2026-05-04 20:52:07,766 - geospatial_clustering - INFO - 
+Zone 8: East_Indonesia
+2026-05-04 20:52:07,768 - geospatial_clustering - INFO -   Center: (-3.24, 133.49)
+2026-05-04 20:52:07,769 - geospatial_clustering - INFO -   Sample events: 464 (0.9%)
+2026-05-04 20:52:07,770 - geospatial_clustering - INFO -   Bounds: Lat [-8.82, -0.69]
+2026-05-04 20:52:07,772 - geospatial_clustering - INFO -           Lon [126.78, 140.95]
+2026-05-04 20:52:07,776 - geospatial_clustering - INFO - 
+Zone 9: Bali_Region
+2026-05-04 20:52:07,777 - geospatial_clustering - INFO -   Center: (1.93, 112.44)
+2026-05-04 20:52:07,777 - geospatial_clustering - INFO -   Sample events: 2,087 (4.2%)
+2026-05-04 20:52:07,779 - geospatial_clustering - INFO -   Bounds: Lat [-0.96, 6.00]
+2026-05-04 20:52:07,781 - geospatial_clustering - INFO -           Lon [107.85, 118.48]
+2026-05-04 20:52:07,783 - geospatial_clustering - INFO - Applying clustering to full dataset...
+2026-05-04 20:52:07,839 - geospatial_clustering - INFO - [OK] Assigned 370,156 records to zones
+2026-05-04 20:52:07,847 - geospatial_clustering - INFO - 
+Zone distribution:
+2026-05-04 20:52:07,848 - geospatial_clustering - INFO -   Zone 0 (Sumatra_South): 37,141 events (10.0%)
+2026-05-04 20:52:07,850 - geospatial_clustering - INFO -   Zone 1 (Java_East): 72,397 events (19.6%)
+2026-05-04 20:52:07,851 - geospatial_clustering - INFO -   Zone 2 (Sulawesi): 12,046 events (3.3%)
+2026-05-04 20:52:07,855 - geospatial_clustering - INFO -   Zone 3 (Java_Central): 94,525 events (25.5%)
+2026-05-04 20:52:07,857 - geospatial_clustering - INFO -   Zone 4 (Bali_Region): 31,056 events (8.4%)
+2026-05-04 20:52:07,859 - geospatial_clustering - INFO -   Zone 5 (Sumatra_South): 28,586 events (7.7%)
+2026-05-04 20:52:07,861 - geospatial_clustering - INFO -   Zone 6 (Sumatra_North): 54,531 events (14.7%)
+2026-05-04 20:52:07,863 - geospatial_clustering - INFO -   Zone 7 (Sulawesi): 20,767 events (5.6%)
+2026-05-04 20:52:07,865 - geospatial_clustering - INFO -   Zone 8 (East_Indonesia): 3,916 events (1.1%)
+2026-05-04 20:52:07,866 - geospatial_clustering - INFO -   Zone 9 (Bali_Region): 15,191 events (4.1%)
+2026-05-04 20:52:07,868 - data_preparation - INFO - Creating monthly time series...
+2026-05-04 20:52:08,055 - data_preparation - INFO - [OK] Created monthly time series with 3110 records
+2026-05-04 21:02:21,386 - visualization - INFO - Creating time series trends visualization...
+2026-05-04 21:05:24,440 - feature_engineering - INFO - Creating advanced tree-based features...
+2026-05-04 21:05:24,492 - feature_engineering - INFO - [OK] Dropped 60 rows due to lagging
+2026-05-04 21:05:24,494 - feature_engineering - INFO - [OK] Created features. Final shape: (3050, 24)
+2026-05-04 21:05:24,501 - feature_engineering - INFO - Temporal Split (80% Train):
+2026-05-04 21:05:24,503 - feature_engineering - INFO -   Train: < 2021-02 (2440 rows)
+2026-05-04 21:05:24,504 - feature_engineering - INFO -   Test : >= 2021-02 (610 rows)
+2026-05-04 21:09:38,472 - models - INFO - 
+============================================================
+2026-05-04 21:09:38,473 - models - INFO - TRAINING HURDLE MODELS FOR ALL ZONES
+2026-05-04 21:09:38,474 - models - INFO - ============================================================
+2026-05-04 21:09:38,478 - models - INFO - 
+============================================================
+2026-05-04 21:09:38,480 - models - INFO - Zone 0: Zone_0
+2026-05-04 21:09:38,481 - models - INFO - ============================================================
+2026-05-04 21:09:38,482 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:38,845 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:39,143 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 491.14
+2026-05-04 21:09:39,144 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:39,253 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:39,501 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 474.93
+2026-05-04 21:09:39,503 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:39,617 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:39,797 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 421.04
+2026-05-04 21:09:39,798 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:39,802 - models - INFO - 
+============================================================
+2026-05-04 21:09:39,803 - models - INFO - Zone 1: Zone_1
+2026-05-04 21:09:39,804 - models - INFO - ============================================================
+2026-05-04 21:09:39,806 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:39,878 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:40,055 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 747.67
+2026-05-04 21:09:40,057 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:40,147 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:40,344 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 698.85
+2026-05-04 21:09:40,344 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:40,423 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:40,612 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 814.82
+2026-05-04 21:09:40,614 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:40,617 - models - INFO - 
+============================================================
+2026-05-04 21:09:40,618 - models - INFO - Zone 2: Zone_2
+2026-05-04 21:09:40,619 - models - INFO - ============================================================
+2026-05-04 21:09:40,620 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:40,700 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.203
+2026-05-04 21:09:40,849 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 143.84
+2026-05-04 21:09:40,850 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:40,915 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.198
+2026-05-04 21:09:41,060 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 140.66
+2026-05-04 21:09:41,061 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:41,131 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.333
+2026-05-04 21:09:41,274 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 149.93
+2026-05-04 21:09:41,275 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:41,278 - models - INFO - 
+============================================================
+2026-05-04 21:09:41,279 - models - INFO - Zone 3: Zone_3
+2026-05-04 21:09:41,280 - models - INFO - ============================================================
+2026-05-04 21:09:41,281 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:41,356 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.186
+2026-05-04 21:09:41,519 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 883.38
+2026-05-04 21:09:41,520 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:41,594 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.103
+2026-05-04 21:09:41,773 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 875.59
+2026-05-04 21:09:41,774 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:41,846 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.044
+2026-05-04 21:09:42,014 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 893.72
+2026-05-04 21:09:42,016 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:42,018 - models - INFO - 
+============================================================
+2026-05-04 21:09:42,018 - models - INFO - Zone 4: Zone_4
+2026-05-04 21:09:42,020 - models - INFO - ============================================================
+2026-05-04 21:09:42,022 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:42,087 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.373
+2026-05-04 21:09:42,246 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 375.44
+2026-05-04 21:09:42,247 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:42,327 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.353
+2026-05-04 21:09:42,503 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 394.55
+2026-05-04 21:09:42,505 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:42,620 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.053
+2026-05-04 21:09:42,860 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 425.77
+2026-05-04 21:09:42,861 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:42,865 - models - INFO - 
+============================================================
+2026-05-04 21:09:42,866 - models - INFO - Zone 5: Zone_5
+2026-05-04 21:09:42,867 - models - INFO - ============================================================
+2026-05-04 21:09:42,868 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:42,930 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:43,084 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 402.15
+2026-05-04 21:09:43,085 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:43,146 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:43,335 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 421.15
+2026-05-04 21:09:43,337 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:43,501 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:43,666 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 428.85
+2026-05-04 21:09:43,668 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:43,672 - models - INFO - 
+============================================================
+2026-05-04 21:09:43,674 - models - INFO - Zone 6: Zone_6
+2026-05-04 21:09:43,675 - models - INFO - ============================================================
+2026-05-04 21:09:43,676 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:43,755 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:43,957 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 704.23
+2026-05-04 21:09:43,959 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:44,031 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:44,214 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 731.53
+2026-05-04 21:09:44,214 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:44,289 - models - INFO -   [Stage 1 - Classifier] AUC Score: N/A (Single class in test set)
+2026-05-04 21:09:44,448 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 766.20
+2026-05-04 21:09:44,449 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:44,453 - models - INFO - 
+============================================================
+2026-05-04 21:09:44,453 - models - INFO - Zone 7: Zone_7
+2026-05-04 21:09:44,454 - models - INFO - ============================================================
+2026-05-04 21:09:44,455 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:44,540 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.136
+2026-05-04 21:09:44,822 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 224.24
+2026-05-04 21:09:44,825 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:44,898 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.578
+2026-05-04 21:09:45,073 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 228.78
+2026-05-04 21:09:45,074 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:45,151 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.088
+2026-05-04 21:09:45,294 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 220.57
+2026-05-04 21:09:45,295 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:45,298 - models - INFO - 
+============================================================
+2026-05-04 21:09:45,299 - models - INFO - Zone 8: Zone_8
+2026-05-04 21:09:45,300 - models - INFO - ============================================================
+2026-05-04 21:09:45,301 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:45,367 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.746
+2026-05-04 21:09:45,497 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 55.45
+2026-05-04 21:09:45,498 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:45,558 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.517
+2026-05-04 21:09:45,686 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 53.84
+2026-05-04 21:09:45,686 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:45,748 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.570
+2026-05-04 21:09:45,869 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 54.75
+2026-05-04 21:09:45,870 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:45,872 - models - INFO - 
+============================================================
+2026-05-04 21:09:45,873 - models - INFO - Zone 9: Zone_9
+2026-05-04 21:09:45,874 - models - INFO - ============================================================
+2026-05-04 21:09:45,875 - models - INFO - 
+>>> Training Horizon T+1 Months <<<
+2026-05-04 21:09:45,937 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.720
+2026-05-04 21:09:46,078 - models - INFO -   [Combined Hurdle] T+1 Test RMSE: 202.91
+2026-05-04 21:09:46,079 - models - INFO - 
+>>> Training Horizon T+2 Months <<<
+2026-05-04 21:09:46,138 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.466
+2026-05-04 21:09:46,285 - models - INFO -   [Combined Hurdle] T+2 Test RMSE: 203.82
+2026-05-04 21:09:46,286 - models - INFO - 
+>>> Training Horizon T+3 Months <<<
+2026-05-04 21:09:46,342 - models - INFO -   [Stage 1 - Classifier] AUC Score: 0.509
+2026-05-04 21:09:46,483 - models - INFO -   [Combined Hurdle] T+3 Test RMSE: 221.26
+2026-05-04 21:09:46,484 - models - INFO - 
+[OK] Zone training complete
+2026-05-04 21:09:46,485 - models - INFO - 
+============================================================
+2026-05-04 21:09:46,486 - models - INFO - [OK] TRAINING COMPLETE - 10 zones trained
+2026-05-04 21:09:46,487 - models - INFO - ============================================================
