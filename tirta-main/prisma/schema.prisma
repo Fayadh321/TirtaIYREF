@@ -1,5 +1,6 @@
 generator client {
     provider = "prisma-client-js"
+    output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -24,7 +25,7 @@ model FloodZone {
     centerLat       Float
     centerLng       Float
     riskCategory    ZoneRiskLevel     @default(UNKNOWN)
-    predictionScore Float?            // FRI
+    // predictionScore Float?         
     lastPredictedAt DateTime?
     reports         UserReport[]
     createdAt       DateTime          @default(now())
@@ -34,6 +35,7 @@ model FloodZone {
 enum ZoneRiskLevel {
     SANGAT_RAWAN
     RAWAN
+    CUKUP_RAWAN
     TIDAK_RAWAN
     UNKNOWN
 }
@@ -96,6 +98,7 @@ enum GarbageCategory {
     RINGAN
     SEDANG
     BANYAK
+    TIDAK_ADA
 }
 
 enum RoadType {
@@ -149,6 +152,12 @@ enum PhotoCategory {
     GENERAL
 }
 
+enum RiskCategory {
+    TINGGI
+    SEDANG
+    RENDAH
+}
+
 model ReportAnalysis {
     id                String        @id @default(cuid())
     reportId          String        @unique
@@ -163,8 +172,9 @@ model ReportAnalysis {
     vegetationLengthM Float?
 
     zoneIncidentCount Int?     
-    floodRiskScore    Float
+    floodRiskScore    Float        // FRI
     riskLevel         ZoneRiskLevel
+    categoryLevel     RiskCategory    
     recommendation    String?
 
     createdAt         DateTime      @default(now())
