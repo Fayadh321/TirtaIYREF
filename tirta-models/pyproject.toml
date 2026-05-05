@@ -1,0 +1,21 @@
+[project]
+name = "tirta-models"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.136.1",
+    "numpy>=2.2.6",
+    "pillow>=12.2.0",
+    "python-multipart>=0.0.27",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "transformers>=5.7.0",
+    "uvicorn>=0.46.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+]

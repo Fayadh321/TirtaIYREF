@@ -8,13 +8,15 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "seed": "bun prisma/script/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@types/mapbox-gl": "^3.5.0",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "firebase": "^12.12.1",
     "lucide-react": "^1.14.0",
