@@ -1,12 +1,40 @@
 from typing import Optional, List, Dict
+import os
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, Query
 from fastapi.responses import FileResponse, JSONResponse
 from pathlib import Path
 import json
+from cloudinary import v2 as cloudinary
 
 from src.core.visual_analyzer import WEIGHTS
 
 router = APIRouter()
+
+
+def upload_mask_bytes(mask_bytes: bytes, folder: str) -> str:
+    result: Dict[str, str] = {}
+    error_holder: Dict[str, Exception] = {}
+
+    def _callback(error, res):
+        if error or not res:
+            error_holder["error"] = error or Exception("Upload failed")
+            return
+        result["url"] = res.get("secure_url")
+
+    stream = cloudinary.uploader.upload_stream(
+        {
+            "folder": folder,
+            "resource_type": "image",
+            "format": "png",
+        },
+        _callback,
+    )
+    stream.end(mask_bytes)
+
+    if "error" in error_holder:
+        raise error_holder["error"]
+
+    return result.get("url", "")
 
 
 def aggregate(results: List[Dict]) -> Dict:
@@ -54,6 +82,35 @@ async def analyze(request: Request, files: List[UploadFile] = File(...)):
         return {"aggregate": results[0], "per_photo": results}
 
     return {"aggregate": aggregate(results), "per_photo": results}
+
+
+@router.post("/models/visual/segment")
+async def segment(request: Request, files: List[UploadFile] = File(...)):
+    if not os.getenv("CLOUDINARY_URL"):
+        raise HTTPException(status_code=500, detail="CLOUDINARY_URL is not set")
+
+    for f in files:
+        if not f.content_type or not f.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail=f"{f.filename} is not an image")
+
+    analyzer = request.app.state.analyzer
+    metrics: List[Dict] = []
+    per_photo: List[Dict] = []
+
+    for f in files:
+        image_bytes = await f.read()
+        analysis, mask_png = analyzer.analyze_with_mask(image_bytes)
+        mask_url = upload_mask_bytes(mask_png, "tirta/segments")
+        metrics.append(analysis)
+        per_photo.append({
+            **analysis,
+            "mask_url": mask_url,
+        })
+
+    if len(metrics) == 1:
+        return {"aggregate": metrics[0], "per_photo": per_photo}
+
+    return {"aggregate": aggregate(metrics), "per_photo": per_photo}
 
 
 def _get_forecast_path() -> Path:

@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+torch
+torchvision
+numpy
+pillow
+python-multipart
+transformers
+pandas
+scikit-learn
+scipy
+shapely
+matplotlib
+seaborn
+nbformat
+cloudinary
