@@ -126,6 +126,15 @@ class VisualAnalyzer:
             return "MEDIUM"
         return "HIGH"
 
+    def _mask_overlay_png(self, image: Image.Image, drainage_mask: np.ndarray) -> bytes:
+        image_np = np.array(image).copy()
+        overlay_color = np.array([0, 220, 220], dtype=np.uint8)
+        image_np[drainage_mask.astype(bool)] = overlay_color
+        overlay = Image.fromarray(image_np)
+        buffer = io.BytesIO()
+        overlay.save(buffer, format="PNG")
+        return buffer.getvalue()
+
     def analyze(self, image_bytes: bytes) -> dict:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
@@ -141,3 +150,23 @@ class VisualAnalyzer:
             "impervious_ratio":  round(areas["impervious_ratio"],  4),
             "drainage_ratio":    round(areas["drainage_ratio"],    4),
         }
+
+    def analyze_with_mask(self, image_bytes: bytes) -> tuple[dict, bytes]:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+        seg_map = self._run_segformer(image)
+        drainage_mask = self._run_grounded_sam(image)
+        areas = self._calculate_areas(seg_map, drainage_mask)
+        fri = self._calculate_fri(areas)
+        overlay_png = self._mask_overlay_png(image, drainage_mask)
+
+        return (
+            {
+                "fri_score":         round(fri, 4),
+                "risk_level":        self._risk_label(fri),
+                "vegetation_ratio":  round(areas["vegetation_ratio"],  4),
+                "impervious_ratio":  round(areas["impervious_ratio"],  4),
+                "drainage_ratio":    round(areas["drainage_ratio"],    4),
+            },
+            overlay_png,
+        )
