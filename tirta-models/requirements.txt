@@ -13,3 +13,4 @@ shapely
 matplotlib
 seaborn
 nbformat
+cloudinary
