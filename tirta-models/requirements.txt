@@ -16,4 +16,3 @@ nbformat
 scipy
 python-dotenv
 cloudinary
-python-dotenv
