@@ -7,6 +7,7 @@ import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -58,11 +59,18 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="mx-auto w-full max-w-md px-5">
         <div className="mb-10 text-center">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-            Welcome back
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">Tirta</h1>
-          <p className="text-slate-500 mt-2">
+          <div className="flex items-center justify-center">
+            <Image
+              src="/tirta.svg"
+              alt="Tirta Logo"
+              width={72}
+              height={72}
+              priority
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+          <h1 className="mt-2 text-3xl font-semibold text-brand-700">Tirta</h1>
+          <p className="mt-4 text-xl font-semibold text-brand-700">
             {isLogin ? "Sign in to continue" : "Create your account"}
           </p>
         </div>
