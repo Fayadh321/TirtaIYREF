@@ -2,10 +2,13 @@
 CREATE TYPE "ZoneRiskLevel" AS ENUM ('SANGAT_RAWAN', 'RAWAN', 'TIDAK_RAWAN', 'UNKNOWN');
 
 -- CreateEnum
+CREATE TYPE "ReportStatus" AS ENUM ('DRAFT', 'PUBLISHED');
+
+-- CreateEnum
 CREATE TYPE "DrainageQuality" AS ENUM ('BAIK', 'SEDANG', 'BURUK', 'TIDAK_ADA');
 
 -- CreateEnum
-CREATE TYPE "GarbageCategory" AS ENUM ('RINGAN', 'SEDANG', 'BANYAK');
+CREATE TYPE "GarbageCategory" AS ENUM ('RINGAN', 'SEDANG', 'BANYAK', 'TIDAK_ADA');
 
 -- CreateEnum
 CREATE TYPE "RoadType" AS ENUM ('ASPAL', 'BETON', 'PAVING', 'TANAH', 'LAINNYA');
@@ -39,7 +42,7 @@ CREATE TABLE "FloodZone" (
     "boundary" JSONB NOT NULL,
     "centerLat" DOUBLE PRECISION NOT NULL,
     "centerLng" DOUBLE PRECISION NOT NULL,
-    "riskCategory" "ZoneRiskLevel" NOT NULL DEFAULT 'UNKNOWN',
+    "averageRiskScore" DOUBLE PRECISION,
     "lastPredictedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -78,6 +81,7 @@ CREATE TABLE "UserReport" (
     "garbageCategory" "GarbageCategory",
     "roadType" "RoadType",
     "vegetationDensity" "VegetationDensity",
+    "status" "ReportStatus" NOT NULL DEFAULT 'DRAFT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -105,6 +109,7 @@ CREATE TABLE "ReportPhoto" (
     "detectedObjects" JSONB,
     "measuredLengthM" DOUBLE PRECISION,
     "hasVegetation" BOOLEAN,
+    "visualizedUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ReportPhoto_pkey" PRIMARY KEY ("id")
@@ -124,7 +129,8 @@ CREATE TABLE "ReportAnalysis" (
     "floodRiskScore" DOUBLE PRECISION NOT NULL,
     "riskLevel" "ZoneRiskLevel" NOT NULL,
     "categoryLevel" "RiskCategory" NOT NULL,
-    "recommendation" TEXT,
+    "analysisMetrics" JSONB,
+    "visualizedUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
