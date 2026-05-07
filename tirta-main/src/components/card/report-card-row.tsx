@@ -13,6 +13,7 @@ export interface ReportCardRowProps {
   friScore?: number | null;
   riskCategory?: RiskCategory | null;
   showRiskLabel?: boolean;
+  status?: "DRAFT" | "PUBLISHED";
   className?: string;
 }
 
@@ -54,26 +55,41 @@ export function ReportCardRow({
   friScore,
   riskCategory,
   showRiskLabel = true,
+  status = "PUBLISHED",
   className,
 }: ReportCardRowProps) {
   const router = useRouter();
 
-  const hasBadge = showRiskLabel && riskCategory;
-  const badgeBgColor = riskCategory
-    ? RISK_BG_COLOR[riskCategory]
-    : "bg-slate-400";
-  const badgeTextColor = riskCategory
-    ? RISK_TEXT_COLOR[riskCategory]
-    : "text-white";
-  const badgeText = riskCategory ? RISK_LABEL[riskCategory] : null;
+  const isDraft = status === "DRAFT";
+  const hasBadge = (showRiskLabel && riskCategory) || isDraft;
+  const badgeBgColor = isDraft
+    ? "bg-amber-500"
+    : riskCategory
+      ? RISK_BG_COLOR[riskCategory]
+      : "bg-slate-400";
+  const badgeTextColor = isDraft
+    ? "text-white"
+    : riskCategory
+      ? RISK_TEXT_COLOR[riskCategory]
+      : "text-white";
+  const badgeText = isDraft
+    ? "DRAFT"
+    : riskCategory
+      ? RISK_LABEL[riskCategory]
+      : null;
   const scoreText = friScore != null ? `${Math.round(friScore)} FRI` : null;
 
   return (
     <button
       type="button"
-      onClick={() => router.push(`/report/${id}`)}
+      onClick={() =>
+        router.push(
+          isDraft ? `/report/results?reportId=${id}` : `/report/${id}`,
+        )
+      }
       className={cn(
         "relative flex w-full items-center gap-3.5 rounded-2xl bg-white px-3.5 py-3 text-left border active:scale-[0.98] transition-transform duration-150",
+        isDraft && "border-amber-200 bg-amber-50/10",
         className,
       )}
     >
