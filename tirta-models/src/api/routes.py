@@ -7,9 +7,6 @@ import json
 
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
-
-from src.core.visual_analyzer import WEIGHTS
 
 router = APIRouter()
 
@@ -21,52 +18,28 @@ def get_analyzer(request: Request):
 
 
 def upload_mask_bytes(mask_bytes: bytes, folder: str) -> str:
-    result: Dict[str, str] = {}
-    error_holder: Dict[str, Exception] = {}
-
-    def _callback(error, res):
-        if error or not res:
-            error_holder["error"] = error or Exception("Upload failed")
-            return
-        result["url"] = res.get("secure_url")
-
-    stream = cloudinary.uploader.upload_stream(
-        {
-            "folder": folder,
-            "resource_type": "image",
-            "format": "png",
-        },
-        _callback,
+    import io
+    result = cloudinary.uploader.upload(
+        io.BytesIO(mask_bytes),
+        folder=folder,
+        resource_type="image",
+        format="png",
     )
-    stream.end(mask_bytes)
-
-    if "error" in error_holder:
-        raise error_holder["error"]
-
-    return result.get("url", "")
+    return result.get("secure_url", "")
 
 
 def aggregate(results: List[Dict]) -> Dict:
-    veg    = sum(r["vegetation_ratio"]  for r in results) / len(results)
-    imperv = sum(r["impervious_ratio"]  for r in results) / len(results)
-    drain  = sum(r["drainage_ratio"]    for r in results) / len(results)
-
-    raw = imperv * WEIGHTS["impervious"] - veg * WEIGHTS["vegetation"] - drain * WEIGHTS["drainage"]
-    fri = float(max(0.0, min(1.0, raw / 0.5)))
-
-    if fri < 0.3:
-        risk = "LOW"
-    elif fri < 0.6:
-        risk = "MEDIUM"
-    else:
-        risk = "HIGH"
+    n = len(results)
+    veg = sum(r["vegetation_ratio"] for r in results) / n
+    soil = sum(r["soil_ratio"] for r in results) / n
+    imperv = sum(r["impervious_ratio"] for r in results) / n
+    building = sum(r["building_ratio"] for r in results) / n
 
     return {
-        "fri_score":        round(fri,    4),
-        "risk_level":       risk,
-        "vegetation_ratio": round(veg,    4),
+        "vegetation_ratio": round(veg, 4),
+        "soil_ratio": round(soil, 4),
         "impervious_ratio": round(imperv, 4),
-        "drainage_ratio":   round(drain,  4),
+        "building_ratio": round(building, 4),
     }
 
 
@@ -78,27 +51,13 @@ def health(request: Request):
     }
 
 
-@router.post("/models/visual/analyze")
-async def analyze(request: Request, files: List[UploadFile] = File(...)):
-    for f in files:
-        if not f.content_type or not f.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail=f"{f.filename} is not an image")
-
-    analyzer = get_analyzer(request)  # ✅ pakai lazy load
-    results  = []
-
-    for f in files:
-        image_bytes = await f.read()
-        results.append(analyzer.analyze(image_bytes))
-
-    if len(results) == 1:
-        return {"aggregate": results[0], "per_photo": results}
-
-    return {"aggregate": aggregate(results), "per_photo": results}
-
-
 @router.post("/models/visual/segment")
 async def segment(request: Request, files: List[UploadFile] = File(...)):
+    """
+    Main analysis endpoint. 
+    Performs segmentation & object detection, calculates FRI, 
+    and uploads segmented overlay (segform) to Cloudinary.
+    """
     if not os.getenv("CLOUDINARY_URL"):
         raise HTTPException(status_code=500, detail="CLOUDINARY_URL is not set")
 
@@ -106,24 +65,33 @@ async def segment(request: Request, files: List[UploadFile] = File(...)):
         if not f.content_type or not f.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail=f"{f.filename} is not an image")
 
-    analyzer = get_analyzer(request)  # ✅ pakai lazy load
-    metrics: List[Dict] = []
-    per_photo: List[Dict] = []
+    analyzer = get_analyzer(request)
+    metrics_list: List[Dict] = []
+    per_photo:    List[Dict] = []
 
     for f in files:
         image_bytes = await f.read()
-        analysis, mask_png = analyzer.analyze_with_mask(image_bytes)
-        mask_url = upload_mask_bytes(mask_png, "tirta/segments")
-        metrics.append(analysis)
+        
+        analysis, segform_bytes = analyzer.analyze_with_overlay(image_bytes)
+    
+        mask_url = upload_mask_bytes(segform_bytes, "tirta/segments")
+        
+        metrics_list.append(analysis)
         per_photo.append({
             **analysis,
             "mask_url": mask_url,
         })
 
-    if len(metrics) == 1:
-        return {"aggregate": metrics[0], "per_photo": per_photo}
+    # If multiple photos, aggregate them
+    if len(metrics_list) == 1:
+        agg = metrics_list[0]
+    else:
+        agg = aggregate(metrics_list)
 
-    return {"aggregate": aggregate(metrics), "per_photo": per_photo}
+    return {
+        "aggregate": agg,
+        "per_photo": per_photo
+    }
 
 
 def _get_forecast_path() -> Path:
