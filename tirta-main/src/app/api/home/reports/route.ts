@@ -45,11 +45,6 @@ export async function GET(req: NextRequest) {
 
   const hasLocation = lat !== 0 && lng !== 0;
 
-  const latDelta = radiusM / 111000;
-  const lngDelta = hasLocation
-    ? radiusM / (111000 * Math.cos((lat * Math.PI) / 180))
-    : 0;
-
   const categoryFilter = riskFilter?.length
     ? {
         in: riskFilter,
@@ -110,7 +105,7 @@ export async function GET(req: NextRequest) {
   }));
 
   const nearbyResults = hasLocation
-    ? withDistance.filter((r) => r.distanceM! <= radiusM)
+    ? withDistance.filter((r) => (r.distanceM ?? 0) <= radiusM)
     : withDistance;
 
   const listedResults = withDistance;

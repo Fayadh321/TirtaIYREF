@@ -3,8 +3,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { RiskCategory, ZoneRiskLevel } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
-const CLOUDINARY_URL = process.env.CLOUDINARY_URL!;
-const FAST_API_URL = process.env.FAST_API_URL!;
+const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
+const FAST_API_URL = process.env.FAST_API_URL;
 
 if (!CLOUDINARY_URL) {
   throw new Error("CLOUDINARY_URL is not defined");
@@ -14,18 +14,16 @@ if (!FAST_API_URL) {
   throw new Error("FAST_API_URL is not defined");
 }
 
-const W_PHOTO = 0.45;
-const W_ZONE = 0.3;
-const W_FORM = 0.25;
+const FAST_API_BASE = FAST_API_URL.replace(/\/+$/, "");
 
-const ZONE_SCORE: Record<string, number> = {
-  SANGAT_RAWAN: 100,
-  RAWAN: 75,
-  CUKUP_RAWAN: 50,
-  KURANG_RAWAN: 25,
-  TIDAK_RAWAN: 0,
-  UNKNOWN: 0,
-};
+const W_PHOTO = 0.4;
+const W_ZONE = 0.4;
+const W_FORM = 0.2;
+
+const W_VISUAL_SURFACE = 0.3;
+const W_VISUAL_BUILDING = 0.35;
+const W_VISUAL_SOIL = 0.15;
+const W_VISUAL_VEGETATION = 0.2;
 
 const DRAINAGE_SCORE: Record<string, number> = {
   TIDAK_ADA: 100,
@@ -48,6 +46,45 @@ const ROAD_SCORE: Record<string, number> = {
   TANAH: 10,
   LAINNYA: 0,
 };
+
+function clampRatio(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function calcVisualScores(
+  metrics: {
+    vegetation_ratio?: number;
+    soil_ratio?: number;
+    impervious_ratio?: number;
+    building_ratio?: number;
+  },
+  roadType: string | null,
+) {
+  const surfaceRatio = clampRatio(metrics.impervious_ratio ?? 0);
+  const soilRatio = clampRatio(metrics.soil_ratio ?? 0);
+  const vegetationRatio = clampRatio(metrics.vegetation_ratio ?? 0);
+  const buildingRatio = clampRatio(metrics.building_ratio ?? 0);
+  const roadFactor = (roadType ? ROAD_SCORE[roadType] : 50) / 100;
+  const surfaceScore = surfaceRatio * roadFactor * 100;
+  const soilScore = soilRatio * 100;
+  const vegetationScore = (1 - vegetationRatio) * 100;
+  const buildingScore = buildingRatio * 100;
+  const densityBonus = buildingRatio > 0.7 ? 15 : buildingRatio > 0.5 ? 8 : 0;
+  const photoScore =
+    W_VISUAL_SURFACE * surfaceScore +
+    W_VISUAL_BUILDING * buildingScore +
+    W_VISUAL_SOIL * (100 - soilScore) +
+    W_VISUAL_VEGETATION * vegetationScore +
+    densityBonus;
+
+  return {
+    photoScore,
+    surfaceScore,
+    soilScore,
+    buildingScore,
+    vegetationScore,
+  };
+}
 
 function calcFormScore(
   drainage: string,
@@ -78,15 +115,13 @@ function toCategoryLevel(fri: number): RiskCategory {
   return RiskCategory.RENDAH;
 }
 
-// function toRiskLevel(zone: number): ZoneRiskLevel {
-//     if (zone >= 75) return ZoneRiskLevel.SANGAT_RAWAN;
-//     if (zone >= 50) return ZoneRiskLevel.RAWAN;
-//     if (zone >= 25) return ZoneRiskLevel.CUKUP_RAWAN;
-//     if (zone > 0) return ZoneRiskLevel.TIDAK_RAWAN;
-//     return ZoneRiskLevel.UNKNOWN;
-// }
+export function forecastToZoneRisk(avgRisk: number): ZoneRiskLevel {
+  if (avgRisk >= 0.8) return ZoneRiskLevel.SANGAT_RAWAN;
+  if (avgRisk >= 0.3) return ZoneRiskLevel.RAWAN;
+  return ZoneRiskLevel.TIDAK_RAWAN;
+}
 
-function pointInZoneBbox(
+export function pointInZoneBbox(
   lat: number,
   lng: number,
   centerLat: number,
@@ -138,12 +173,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const user = await prisma.user.findUnique({
+    where: {
+      firebaseUID,
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: "User not found",
+      },
+      {
+        status: 404,
+      },
+    );
+  }
+
   // const form = await req.formData();
   let form: FormData;
 
   try {
     form = await req.formData();
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       {
         error: "Invalid form data",
@@ -202,9 +254,11 @@ export async function POST(req: NextRequest) {
       photoFiles.map((f) => uploadToCloudinary(f, "tirta/reports")),
     ),
     (async () => {
-      if (photoFiles.length === 0) return 0; // default fri no photo
+      if (photoFiles.length === 0) {
+        return { visualizedUrl: null, perPhoto: [], metrics: {} };
+      }
 
-      const res = await fetch(`${FAST_API_URL}/model/segmentation`, {
+      const res = await fetch(`${FAST_API_BASE}/models/visual/segment`, {
         method: "POST",
         body: segForm,
       });
@@ -212,14 +266,56 @@ export async function POST(req: NextRequest) {
       if (!res.ok) throw new Error("FastAPI segmentation error");
 
       const data = (await res.json()) as {
-        fri_score: number;
+        aggregate?: {
+          vegetation_ratio?: number;
+          soil_ratio?: number;
+          impervious_ratio?: number;
+          building_ratio?: number;
+        };
+        per_photo?: {
+          mask_url?: string;
+        }[];
       };
 
-      return data.fri_score;
+      return {
+        visualizedUrl: data.per_photo?.[0]?.mask_url ?? null,
+        perPhoto: data.per_photo ?? [],
+        metrics: data.aggregate || {},
+      };
     })(),
   ]);
 
-  const friPhoto = segResult.status === "fulfilled" ? segResult.value : 0;
+  // critical log
+  if (segResult.status === "rejected") {
+    console.error("CRITICAL: FastAPI Segmentation Failed:", segResult.reason);
+  }
+
+  const segData =
+    segResult.status === "fulfilled"
+      ? segResult.value
+      : {
+          visualizedUrl: null,
+          perPhoto: [],
+          metrics: {},
+        };
+
+  if (photoFiles.length > 0 && !segData.visualizedUrl) {
+    return NextResponse.json(
+      {
+        error: "AI model gagal memproses foto. Coba lagi nanti.",
+      },
+      {
+        status: 502,
+      },
+    );
+  }
+
+  const visualScores = calcVisualScores(
+    segData.metrics ?? {},
+    roadType ?? null,
+  );
+  const photoScore = Math.round(visualScores.photoScore * 10) / 10;
+  const primaryMask = segData.visualizedUrl;
 
   const uploadedPhotoURLs: string[] = [];
 
@@ -244,7 +340,7 @@ export async function POST(req: NextRequest) {
       id: true,
       centerLat: true,
       centerLng: true,
-      riskCategory: true,
+      averageRiskScore: true,
     },
   });
 
@@ -252,9 +348,9 @@ export async function POST(req: NextRequest) {
     nearbyZones.find((z) =>
       pointInZoneBbox(latitude, longitude, z.centerLat, z.centerLng, 500),
     ) ?? null;
-  const zoneRiskLevel: ZoneRiskLevel =
-    matchedZone?.riskCategory ?? ZoneRiskLevel.UNKNOWN;
-  const zoneScore = ZONE_SCORE[zoneRiskLevel] ?? 0;
+  const avgRisk = matchedZone?.averageRiskScore ?? 0;
+  const zoneRiskLevel = forecastToZoneRisk(avgRisk);
+  const zoneScore = avgRisk * 100; // 0-100
 
   const formScore = calcFormScore(
     drainageQuality ?? "",
@@ -262,13 +358,13 @@ export async function POST(req: NextRequest) {
     roadType,
   );
 
-  const friFinal = calcFinalFRI(friPhoto, zoneScore, formScore);
+  const friFinal = calcFinalFRI(photoScore, zoneScore, formScore);
   const categoryLevel = toCategoryLevel(friFinal);
 
   const report = await prisma.$transaction(async (tx) => {
     const newReport = await tx.userReport.create({
       data: {
-        userId: firebaseUID,
+        userId: user.id,
         zoneId: matchedZone?.id ?? null,
         title,
         description,
@@ -310,6 +406,26 @@ export async function POST(req: NextRequest) {
         floodRiskScore: friFinal,
         riskLevel: zoneRiskLevel,
         categoryLevel,
+        visualizedUrl: primaryMask,
+        analysisMetrics: {
+          ai_metrics: {
+            soil_ratio: segData.metrics?.soil_ratio ?? 0,
+            impervious_ratio: segData.metrics?.impervious_ratio ?? 0,
+            vegetation_ratio: segData.metrics?.vegetation_ratio ?? 0,
+            building_ratio: segData.metrics?.building_ratio ?? 0,
+          },
+          visual_scores: {
+            soil_score: Math.round(visualScores.soilScore * 10) / 10,
+            surface_score: Math.round(visualScores.surfaceScore * 10) / 10,
+            vegetation_score:
+              Math.round(visualScores.vegetationScore * 10) / 10,
+            building_score: Math.round(visualScores.buildingScore * 10) / 10,
+          },
+          photo_score: photoScore,
+          zone_score: zoneScore,
+          form_score: formScore,
+        },
+        // text analysis is not stored biar ga costly
       },
     });
 
@@ -322,7 +438,7 @@ export async function POST(req: NextRequest) {
       fri: {
         final: Math.round(friFinal * 10) / 10,
         breakdown: {
-          photo: Math.round(friPhoto * 10) / 10,
+          photo: Math.round(photoScore * 10) / 10,
           zone: zoneScore,
           form: Math.round(formScore * 10) / 10,
         },

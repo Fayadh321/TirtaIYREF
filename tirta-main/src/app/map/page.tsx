@@ -149,9 +149,11 @@ export default function MapPage() {
         </div>
       `;
         userMarkerEl.current = el.firstElementChild as HTMLDivElement;
-        // wrap the outer div properly
         const wrapper = document.createElement("div");
-        wrapper.appendChild(el.firstElementChild!);
+        const firstChild = el.firstElementChild;
+        if (firstChild) {
+          wrapper.appendChild(firstChild);
+        }
 
         userMarker.current = new mapboxgl.Marker({
           element: wrapper,
@@ -163,7 +165,6 @@ export default function MapPage() {
         userMarker.current.setLngLat([lng, lat]);
       }
 
-      // update cone rotation
       const cone = userMarker.current
         .getElement()
         .querySelector<HTMLElement>(".user-dot-bearing");
@@ -185,7 +186,6 @@ export default function MapPage() {
     return () => window.removeEventListener("deviceorientation", handler, true);
   }, []);
 
-  // recenter ke posisi user dan arahkan bearing sesuai device
   const handleRecenter = useCallback(() => {
     if (!map.current || !userCoords) return;
     map.current.flyTo({
@@ -197,7 +197,6 @@ export default function MapPage() {
     });
   }, [userCoords]);
 
-  // init map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
     if (!mapboxToken) {
@@ -218,7 +217,6 @@ export default function MapPage() {
     map.current.on("load", () => {
       map.current?.resize();
 
-      // terrain 3d
       map.current?.addSource("mapbox-dem", {
         type: "raster-dem",
         url: "mapbox://mapbox.mapbox-terrain-dem-v1",
@@ -239,7 +237,6 @@ export default function MapPage() {
         },
       });
 
-      // fly ke posisi pertama
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
@@ -259,7 +256,6 @@ export default function MapPage() {
         },
       );
 
-      // watch position
       navigator.geolocation.watchPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
@@ -282,7 +278,6 @@ export default function MapPage() {
     };
   }, [fetchMapData, reverseGeocode, syncUserMarker]);
 
-  // render zone overlay
   useEffect(() => {
     if (!map.current || zones.length === 0) return;
 
@@ -338,7 +333,6 @@ export default function MapPage() {
     }
   }, []);
 
-  // render report markers
   useEffect(() => {
     if (!map.current) return;
     for (const m of markers.current) m.remove();
@@ -381,7 +375,6 @@ export default function MapPage() {
   return (
     <>
       <style>{`
-        /* FRI report markers */
         .fri-marker { cursor: pointer; }
         .fri-bubble {
           display: flex; align-items: center; gap: 4px;
@@ -402,7 +395,6 @@ export default function MapPage() {
           font-size: 11px; font-weight: 700;
         }
 
-        /* user location dot */
         .user-dot-outer {
           position: relative;
           width: 28px; height: 28px;
@@ -432,13 +424,11 @@ export default function MapPage() {
           z-index: 1;
         }
 
-        /* suppress default mapbox controls */
         .mapboxgl-ctrl-bottom-left,
         .mapboxgl-ctrl-bottom-right { display: none !important; }
       `}</style>
 
       <div className="relative h-dvh w-full max-w-md mx-auto overflow-hidden bg-slate-100">
-        {/* search bar */}
         <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12 pb-3 bg-linear-to-b from-white/95 via-white/80 to-transparent pointer-events-none">
           <div className="flex gap-2 pointer-events-auto">
             <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-md border border-slate-100">
@@ -483,7 +473,6 @@ export default function MapPage() {
           )}
         </div>
 
-        {/* map */}
         <div
           ref={mapContainer}
           className="absolute inset-0 z-0"
