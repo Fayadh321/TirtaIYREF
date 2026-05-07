@@ -126,7 +126,7 @@ export function SearchFilter({
           <button
             type="button"
             onClick={openFilter}
-            className="bg-brand text-white flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm active:scale-95 transition-all"
+            className="bg-brand-600 text-white flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm active:scale-95 transition-all"
           >
             <SlidersHorizontal size={18} />
           </button>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { MapPin } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
@@ -46,9 +47,6 @@ export default function HomePage() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [filter, setFilter] = useState<FilterState>({ risk: [], sort: null });
-  // draft filter — hanya apply saat tekan Terapkan
-  const [draft, setDraft] = useState<FilterState>({ risk: [], sort: null });
-
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -154,9 +152,11 @@ export default function HomePage() {
               className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden"
             >
               {user.photoURL ? (
-                <img
+                <Image
                   src={user.photoURL}
                   alt="avatar"
+                  width={40}
+                  height={40}
                   className="h-full w-full object-cover"
                 />
               ) : (

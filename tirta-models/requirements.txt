@@ -13,4 +13,6 @@ shapely
 matplotlib
 seaborn
 nbformat
-cloudinary
+scipy
+python-dotenv
+cloudinarypython-dotenv

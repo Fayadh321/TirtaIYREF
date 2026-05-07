@@ -8,13 +8,13 @@ import {
   Droplets,
   FileText,
   Loader2,
-  MapPin,
   Send,
   Trash2,
   TreePine,
   Upload,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -128,12 +128,18 @@ export default function ReportAddPage() {
   const router = useRouter();
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
+  const [coords, setCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [zoneRisk, setZoneRisk] = useState<{
+    riskLevel: string;
+    averageRiskScore: number;
+    zoneName: string | null;
+  } | null>(null);
 
   // step 1
   const [photos, setPhotos] = useState<File[]>([]);
@@ -153,7 +159,18 @@ export default function ReportAddPage() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setCoords({ lat: latitude, lng: longitude });
+        setCoords({
+          lat: latitude,
+          lng: longitude,
+        });
+
+        const zoneRes = await fetch(
+          `/api/report/zone?lat=${latitude}&lng=${longitude}`,
+        );
+
+        const zoneData = await zoneRes.json();
+        setZoneRisk(zoneData);
+
         const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
         try {
           const res = await fetch(
@@ -217,7 +234,7 @@ export default function ReportAddPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengirim laporan");
-      router.push(`/report/${data.reportId}`);
+      router.push(`/report/results?reportId=${data.reportId}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
@@ -253,6 +270,23 @@ export default function ReportAddPage() {
                   : "Isi informasi laporan"}
               </p>
             </div>
+            {zoneRisk && (
+              <div
+                className={cn(
+                  "ml-auto rounded-full px-3 py-1 text-[10px] font-bold",
+                  zoneRisk.riskLevel === "SANGAT_RAWAN" &&
+                    "bg-red-100 text-red-500",
+                  zoneRisk.riskLevel === "RAWAN" &&
+                    "bg-yellow-100 text-yellow-500",
+                  zoneRisk.riskLevel === "TIDAK_RAWAN" &&
+                    "bg-green-100 text-green-500",
+                  zoneRisk.riskLevel === "UNKNOWN" &&
+                    "bg-slate-100 text-slate-500",
+                )}
+              >
+                {zoneRisk.riskLevel.replaceAll("_", " ")}
+              </div>
+            )}
           </div>
         </header>
         <div className="px-5 pt-3">
@@ -261,6 +295,12 @@ export default function ReportAddPage() {
             longitude={coords?.lng ?? null}
             address={address}
           />
+          {zoneRisk && (
+            <p className="mt-2 px-1 text-[11px] font-semibold text-slate-400">
+              skor zona: {Math.round((zoneRisk.averageRiskScore ?? 0) * 100)}
+              /100
+            </p>
+          )}
         </div>
 
         <ReportBreadcrumbs currentStep={step} />
@@ -290,7 +330,7 @@ export default function ReportAddPage() {
                       FRI
                     </p>
                   </div>
-                  <div className="flex gap-3 w-full max-w-[280px] font-semibold mt-4">
+                  <div className="flex gap-3 w-full max-w-70 font-semibold mt-4">
                     <button
                       type="button"
                       onClick={() => cameraInputRef.current?.click()}
@@ -339,9 +379,11 @@ export default function ReportAddPage() {
                         key={url}
                         className="relative aspect-square overflow-hidden rounded-lg bg-slate-100 border border-slate-100 shadow-sm"
                       >
-                        <img
+                        <Image
                           src={url}
                           alt="preview"
+                          width={300}
+                          height={300}
                           className="h-full w-full object-cover"
                         />
                         <button
@@ -483,9 +525,11 @@ export default function ReportAddPage() {
                           key={url}
                           className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100"
                         >
-                          <img
+                          <Image
                             src={url}
                             alt={`foto-${i}`}
+                            width={100}
+                            height={100}
                             className="h-full w-full object-cover"
                           />
                         </div>

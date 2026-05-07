@@ -82,6 +82,7 @@ export async function GET(req: NextRequest) {
     imageUrl: r.photos[0]?.photoURL ?? null,
     friScore: r.analysis?.floodRiskScore ?? null,
     riskCategory: r.analysis?.categoryLevel ?? null,
+    status: r.status,
     distanceLabel: null,
   }));
 
