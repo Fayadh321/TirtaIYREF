@@ -14,8 +14,6 @@ if (!FAST_API_URL) {
   throw new Error("FAST_API_URL is not defined");
 }
 
-const FAST_API_BASE = FAST_API_URL.replace(/\/+$/, "");
-
 const W_PHOTO = 0.4;
 const W_ZONE = 0.4;
 const W_FORM = 0.2;
@@ -258,7 +256,7 @@ export async function POST(req: NextRequest) {
         return { visualizedUrl: null, perPhoto: [], metrics: {} };
       }
 
-      const res = await fetch(`${FAST_API_BASE}/models/visual/segment`, {
+      const res = await fetch(`${FAST_API_URL}/models/visual/segment`, {
         method: "POST",
         body: segForm,
       });

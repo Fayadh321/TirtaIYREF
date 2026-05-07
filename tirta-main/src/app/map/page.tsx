@@ -7,6 +7,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+// IMPORT KOMPONEN BARU DI SINI
+import { ForecastToggleButton } from "./components/forecast-toggle-button";
 import { MapActionButtons } from "./components/map-actions";
 import { MapBottomSheet } from "./components/map-bottom-sheets";
 import { MapLegend } from "./components/map-legend";
@@ -100,8 +102,14 @@ export default function MapPage() {
     lat: number;
     lng: number;
   } | null>(null);
-
   const [showLegend, setShowLegend] = useState(false);
+
+  // STATE BARU UNTUK FORECAST
+  const [showForecast, setShowForecast] = useState(false);
+  const [isFetchingForecast, setIsFetchingForecast] = useState(false);
+  const [forecastData, setForecastData] =
+    useState<GeoJSON.FeatureCollection | null>(null);
+
   const headingRef = useRef<number>(0);
   const userMarker = useRef<mapboxgl.Marker | null>(null);
   const userMarkerEl = useRef<HTMLDivElement | null>(null);
@@ -133,6 +141,25 @@ export default function MapPage() {
       setLocationLabel("Lokasi tidak diketahui");
     }
   }, []);
+
+  // FUNGSI BARU UNTUK TOGGLE FORECAST
+  const handleToggleForecast = useCallback(async () => {
+    if (!forecastData && !showForecast) {
+      setIsFetchingForecast(true);
+      try {
+        const res = await fetch("/api/map/forecast");
+        const data = await res.json();
+        if (data && data.type === "FeatureCollection") {
+          setForecastData(data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data forecast:", error);
+      } finally {
+        setIsFetchingForecast(false);
+      }
+    }
+    setShowForecast((prev) => !prev);
+  }, [forecastData, showForecast]);
 
   const syncUserMarker = useCallback(
     (lat: number, lng: number, bearing: number) => {
@@ -199,9 +226,7 @@ export default function MapPage() {
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-    if (!mapboxToken) {
-      return;
-    }
+    if (!mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
 
@@ -316,6 +341,96 @@ export default function MapPage() {
     };
     waitReady();
   }, [zones]);
+
+  // USE EFFECT BARU: RENDER FORECAST GRID SEBAGAI HEATMAP
+  useEffect(() => {
+    if (!map.current || !forecastData) return;
+
+    const sourceId = "forecast-grid-source";
+    const layerId = "forecast-grid-layer";
+
+    const waitReady = () => {
+      if (!map.current?.isStyleLoaded()) {
+        setTimeout(waitReady, 100);
+        return;
+      }
+
+      if (!map.current?.getSource(sourceId)) {
+        map.current?.addSource(sourceId, {
+          type: "geojson",
+          data: forecastData,
+        });
+
+        map.current?.addLayer({
+          id: layerId,
+          type: "heatmap", // Diubah menjadi heatmap
+          source: sourceId,
+          layout: {
+            visibility: showForecast ? "visible" : "none",
+          },
+          paint: {
+            "heatmap-intensity": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              9,
+              2.0,
+              15,
+              1.0,
+            ],
+
+            "heatmap-weight": [
+              "interpolate",
+              ["linear"],
+              ["get", "highest_risk_score"],
+              0.0,
+              0.5,
+              0.3,
+              0.7,
+              0.8,
+              1.0,
+            ],
+
+            "heatmap-color": [
+              "interpolate",
+              ["linear"],
+              ["heatmap-density"],
+              0,
+              "rgba(34,197,94,0)",
+              0.05,
+              "rgba(34,197,94,0.4)",
+              0.35,
+              "rgba(245,158,11,0.7)",
+              0.7,
+              "rgba(239,68,68,0.9)",
+            ],
+
+            "heatmap-radius": [
+              "interpolate",
+              ["exponential", 2],
+              ["zoom"],
+              10,
+              16,
+              15,
+              512,
+              20,
+              16384,
+            ],
+
+            "heatmap-opacity": 0.85,
+          },
+        });
+      } else {
+        map.current?.setLayoutProperty(
+          layerId,
+          "visibility",
+          showForecast ? "visible" : "none",
+        );
+      }
+    };
+
+    waitReady();
+  }, [forecastData, showForecast]);
 
   const handleMarkerClick = useCallback(async (report: MapReport) => {
     setSelectedCluster(report);
@@ -437,6 +552,7 @@ export default function MapPage() {
                 {locationLabel}
               </span>
             </div>
+
             <button
               type="button"
               onClick={() => setFilterVisible((v) => !v)}
@@ -444,6 +560,12 @@ export default function MapPage() {
             >
               <SlidersHorizontal size={18} />
             </button>
+
+            <ForecastToggleButton
+              isActive={showForecast}
+              onClick={handleToggleForecast}
+              isLoading={isFetchingForecast}
+            />
           </div>
 
           {filterVisible && (
