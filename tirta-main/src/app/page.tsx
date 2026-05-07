@@ -15,18 +15,16 @@ export default function Home() {
           />
         </div>
 
-        <p className="mt-2 text-3xl font-semibold tracking-tight ">
-          Tirta
-        </p>
+        <p className="mt-2 text-3xl font-semibold tracking-tight ">Tirta</p>
 
         <h1 className="mt-5 text-2xl font-semibold ">
           Every story keeps
-          <br />
-          a community safe
+          <br />a community safe
         </h1>
 
         <p className="mt-4 max-w-xs text-sm">
-          Report, monitor, and share flood conditions with clarity for safer and more connected communities.
+          Report, monitor, and share flood conditions with clarity for safer and
+          more connected communities.
         </p>
 
         <a

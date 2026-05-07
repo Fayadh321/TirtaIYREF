@@ -1,13 +1,13 @@
 "use client";
 
 import { Loader, Lock, Mail } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
-import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
