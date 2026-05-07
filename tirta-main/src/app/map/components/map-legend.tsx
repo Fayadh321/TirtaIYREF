@@ -4,15 +4,10 @@ import { cn } from "@/lib/utils";
 
 interface MapLegendProps {
   show: boolean;
+  items: { label: string; color: string }[];
 }
 
-const LEGEND_ITEMS = [
-  { label: "Sangat Rawan", color: "bg-red-400" },
-  { label: "Rawan", color: "bg-amber-400" },
-  { label: "Tidak Rawan", color: "bg-green-400" },
-];
-
-export function MapLegend({ show }: MapLegendProps) {
+export function MapLegend({ show, items }: MapLegendProps) {
   return (
     <div
       className={cn(
@@ -24,10 +19,11 @@ export function MapLegend({ show }: MapLegendProps) {
       )}
     >
       <div className="rounded-xl bg-slate-100 shadow-md px-3 py-2.5 space-y-1.5">
-        {LEGEND_ITEMS.map((item) => (
+        {items.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
             <div
-              className={cn("h-2.5 w-2.5 rounded-sm opacity-80", item.color)}
+              className="h-2.5 w-2.5 rounded-sm opacity-80"
+              style={{ background: item.color }}
             />
             <span className="text-xs font-semibold">{item.label}</span>
           </div>

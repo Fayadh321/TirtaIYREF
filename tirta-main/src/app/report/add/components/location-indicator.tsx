@@ -6,26 +6,36 @@ interface LocationIndicatorProps {
   address?: string | null;
 }
 
+function formatCoords(lat: number, lng: number): string {
+  const fmt = (v: number, pos: string, neg: string) => {
+    const abs = Math.abs(v);
+    const deg = Math.floor(abs);
+    const min = Math.floor((abs % 1) * 60);
+    const sec = (((abs * 60) % 1) * 60).toFixed(3);
+    return `${deg}° ${min}' ${sec}" ${v < 0 ? neg : pos}`;
+  };
+  return `${fmt(lat, "N", "S")}  ${fmt(lng, "E", "W")}`;
+}
+
 export function LocationIndicator({
   latitude,
   longitude,
   address,
 }: LocationIndicatorProps) {
   return (
-    <div className="flex gap-3">
-      <MapPin size={24} className="mt-1 text-brand" />
+    <div className="flex items-start gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
+        <MapPin size={18} className="text-brand" />
+      </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold">
+        <p className="text-sm font-bold text-slate-900 leading-snug">
           {address || "Mencari lokasi..."}
         </p>
-        <div className="flex gap-1 mt-1 text-[10px]">
-          <code className="font-medium text-slate-500 bg-white px-1 rounded border border-slate-100">
-            {latitude?.toFixed(6) ?? "0.000000"}
-          </code>
-          <code className="font-mono font-medium text-slate-500 bg-white px-1 rounded border border-slate-100">
-            {longitude?.toFixed(6) ?? "0.000000"}
-          </code>
-        </div>
+        <p className="mt-0.5 text-[10px] text-slate-400 font-medium">
+          {latitude !== null && longitude !== null
+            ? formatCoords(latitude, longitude)
+            : "0° 0' 0.000\" N  0° 0' 0.000\" E"}
+        </p>
       </div>
     </div>
   );

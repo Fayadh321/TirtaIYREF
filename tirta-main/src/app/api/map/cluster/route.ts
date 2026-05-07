@@ -28,6 +28,15 @@ export async function GET(req: NextRequest) {
       title: true,
       address: true,
       reportedAt: true,
+      photos: {
+        select: {
+          photoURL: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+        take: 1,
+      },
       user: {
         select: {
           name: true,
@@ -59,6 +68,7 @@ export async function GET(req: NextRequest) {
     title: report.title,
     address: report.address,
     reportedAt: report.reportedAt.toISOString(),
+    imageUrl: report.photos[0]?.photoURL ?? null,
     floodRiskScore: report.analysis?.floodRiskScore ?? 0,
     categoryLevel: report.analysis?.categoryLevel ?? null,
     user: report.user,

@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
@@ -20,6 +19,7 @@ interface HistoryReport {
   imageUrl: string | null;
   friScore: number | null;
   riskCategory: "TINGGI" | "SEDANG" | "RENDAH" | null;
+  status: "DRAFT" | "PUBLISHED";
   distanceLabel: string | null;
 }
 
@@ -139,6 +139,7 @@ export default function HistoryPage() {
                   description={r.description}
                   friScore={r.friScore}
                   riskCategory={r.riskCategory}
+                  status={r.status}
                   showFri
                   showRiskLabel
                 />

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { ForecastToggleButton } from "./components/forecast-toggle-button";
 import { MapActionButtons } from "./components/map-actions";
 import { MapBottomSheet } from "./components/map-bottom-sheets";
 import { MapLegend } from "./components/map-legend";
@@ -31,6 +32,7 @@ interface ClusterReport {
   title: string | null;
   address: string | null;
   reportedAt: string;
+  imageUrl?: string | null;
   floodRiskScore: number;
   categoryLevel: "TINGGI" | "SEDANG" | "RENDAH" | null;
   user: { name: string | null; photoURL: string | null };
@@ -95,13 +97,25 @@ export default function MapPage() {
   const [clusterReports, setClusterReports] = useState<ClusterReport[]>([]);
   const [sheetLoading, setSheetLoading] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [activeReportFilter, setActiveReportFilter] = useState<
+    "ALL" | "TINGGI" | "SEDANG" | "RENDAH"
+  >("ALL");
+  const [activeForecastFilter, setActiveForecastFilter] = useState<
+    "ALL" | "SANGAT_RAWAN" | "RAWAN" | "TIDAK_RAWAN"
+  >("ALL");
   const [userCoords, setUserCoords] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
-
   const [showLegend, setShowLegend] = useState(false);
+
+  const [showForecast, setShowForecast] = useState(false);
+  const [isFetchingForecast, setIsFetchingForecast] = useState(false);
+  const [forecastData, setForecastData] =
+    useState<GeoJSON.FeatureCollection | null>(null);
+  const [forecastFiltered, setForecastFiltered] =
+    useState<GeoJSON.FeatureCollection | null>(null);
+
   const headingRef = useRef<number>(0);
   const userMarker = useRef<mapboxgl.Marker | null>(null);
   const userMarkerEl = useRef<HTMLDivElement | null>(null);
@@ -134,6 +148,39 @@ export default function MapPage() {
     }
   }, []);
 
+  const handleToggleForecast = useCallback(async () => {
+    if (!forecastData && !showForecast) {
+      setIsFetchingForecast(true);
+      try {
+        const res = await fetch("/api/map/forecast");
+        const data = await res.json();
+        if (data && data.type === "FeatureCollection") {
+          setForecastData(data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data forecast:", error);
+      } finally {
+        setIsFetchingForecast(false);
+      }
+    }
+    setShowForecast((prev) => !prev);
+  }, [forecastData, showForecast]);
+
+  const forwardGeocode = useCallback(async (query: string) => {
+    const q = query.trim();
+    if (!q) return null;
+    const res = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        q,
+      )}.json?types=address,poi,place,locality,neighborhood&language=id&access_token=${mapboxToken}`,
+    );
+    const data = await res.json();
+    const feature = data.features?.[0];
+    if (!feature?.center?.length) return null;
+    const [lng, lat] = feature.center as [number, number];
+    return { lat, lng, label: feature.place_name as string };
+  }, []);
+
   const syncUserMarker = useCallback(
     (lat: number, lng: number, bearing: number) => {
       if (!map.current) return;
@@ -149,9 +196,11 @@ export default function MapPage() {
         </div>
       `;
         userMarkerEl.current = el.firstElementChild as HTMLDivElement;
-        // wrap the outer div properly
         const wrapper = document.createElement("div");
-        wrapper.appendChild(el.firstElementChild!);
+        const firstChild = el.firstElementChild;
+        if (firstChild) {
+          wrapper.appendChild(firstChild);
+        }
 
         userMarker.current = new mapboxgl.Marker({
           element: wrapper,
@@ -163,7 +212,6 @@ export default function MapPage() {
         userMarker.current.setLngLat([lng, lat]);
       }
 
-      // update cone rotation
       const cone = userMarker.current
         .getElement()
         .querySelector<HTMLElement>(".user-dot-bearing");
@@ -185,7 +233,6 @@ export default function MapPage() {
     return () => window.removeEventListener("deviceorientation", handler, true);
   }, []);
 
-  // recenter ke posisi user dan arahkan bearing sesuai device
   const handleRecenter = useCallback(() => {
     if (!map.current || !userCoords) return;
     map.current.flyTo({
@@ -197,12 +244,9 @@ export default function MapPage() {
     });
   }, [userCoords]);
 
-  // init map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-    if (!mapboxToken) {
-      return;
-    }
+    if (!mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
 
@@ -218,7 +262,6 @@ export default function MapPage() {
     map.current.on("load", () => {
       map.current?.resize();
 
-      // terrain 3d
       map.current?.addSource("mapbox-dem", {
         type: "raster-dem",
         url: "mapbox://mapbox.mapbox-terrain-dem-v1",
@@ -239,7 +282,6 @@ export default function MapPage() {
         },
       });
 
-      // fly ke posisi pertama
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
@@ -259,7 +301,6 @@ export default function MapPage() {
         },
       );
 
-      // watch position
       navigator.geolocation.watchPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
@@ -282,7 +323,6 @@ export default function MapPage() {
     };
   }, [fetchMapData, reverseGeocode, syncUserMarker]);
 
-  // render zone overlay
   useEffect(() => {
     if (!map.current || zones.length === 0) return;
 
@@ -322,6 +362,134 @@ export default function MapPage() {
     waitReady();
   }, [zones]);
 
+  const forecastRiskLevel = useCallback((score: number) => {
+    if (score >= 0.8) return "SANGAT_RAWAN" as const;
+    if (score >= 0.3) return "RAWAN" as const;
+    return "TIDAK_RAWAN" as const;
+  }, []);
+
+  useEffect(() => {
+    if (!forecastData) {
+      setForecastFiltered(null);
+      return;
+    }
+
+    if (activeForecastFilter === "ALL") {
+      setForecastFiltered(forecastData);
+      return;
+    }
+
+    const features = (forecastData.features ?? []).filter((f) => {
+      const props = (f as GeoJSON.Feature).properties as
+        | Record<string, unknown>
+        | null
+        | undefined;
+
+      const score =
+        (props?.highest_risk_score as number | undefined) ??
+        (props?.average_risk as number | undefined) ??
+        0;
+      return forecastRiskLevel(Number(score) || 0) === activeForecastFilter;
+    });
+
+    setForecastFiltered({
+      type: "FeatureCollection",
+      features,
+    } as GeoJSON.FeatureCollection);
+  }, [forecastData, activeForecastFilter, forecastRiskLevel]);
+
+  // USE EFFECT BARU: RENDER FORECAST GRID SEBAGAI HEATMAP
+  useEffect(() => {
+    if (!map.current || !forecastFiltered) return;
+
+    const sourceId = "forecast-grid-source";
+    const layerId = "forecast-grid-layer";
+
+    const waitReady = () => {
+      if (!map.current?.isStyleLoaded()) {
+        setTimeout(waitReady, 100);
+        return;
+      }
+
+      if (!map.current?.getSource(sourceId)) {
+        map.current?.addSource(sourceId, {
+          type: "geojson",
+          data: forecastFiltered,
+        });
+
+        map.current?.addLayer({
+          id: layerId,
+          type: "heatmap", // Diubah menjadi heatmap
+          source: sourceId,
+          layout: {
+            visibility: showForecast ? "visible" : "none",
+          },
+          paint: {
+            "heatmap-intensity": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              9,
+              2.0,
+              15,
+              1.0,
+            ],
+
+            "heatmap-weight": [
+              "interpolate",
+              ["linear"],
+              ["get", "highest_risk_score"],
+              0.0,
+              0.5,
+              0.3,
+              0.7,
+              0.8,
+              1.0,
+            ],
+
+            "heatmap-color": [
+              "interpolate",
+              ["linear"],
+              ["heatmap-density"],
+              0,
+              "rgba(34,197,94,0)",
+              0.05,
+              "rgba(34,197,94,0.4)",
+              0.35,
+              "rgba(245,158,11,0.7)",
+              0.7,
+              "rgba(239,68,68,0.9)",
+            ],
+
+            "heatmap-radius": [
+              "interpolate",
+              ["exponential", 2],
+              ["zoom"],
+              10,
+              16,
+              15,
+              512,
+              20,
+              16384,
+            ],
+
+            "heatmap-opacity": 0.85,
+          },
+        });
+      } else {
+        const src = map.current?.getSource(sourceId) as mapboxgl.GeoJSONSource;
+        src?.setData(forecastFiltered as GeoJSON.FeatureCollection);
+        map.current?.setLayoutProperty(
+          layerId,
+          "visibility",
+          showForecast ? "visible" : "none",
+        );
+      }
+    };
+
+    waitReady();
+  }, [forecastFiltered, showForecast]);
+
   const handleMarkerClick = useCallback(async (report: MapReport) => {
     setSelectedCluster(report);
     setClusterReports([]);
@@ -338,16 +506,15 @@ export default function MapPage() {
     }
   }, []);
 
-  // render report markers
   useEffect(() => {
     if (!map.current) return;
     for (const m of markers.current) m.remove();
     markers.current = [];
 
     const filtered =
-      activeFilter === "ALL"
+      activeReportFilter === "ALL"
         ? reports
-        : reports.filter((r) => r.categoryLevel === activeFilter);
+        : reports.filter((r) => r.categoryLevel === activeReportFilter);
 
     filtered.forEach((report) => {
       const color = friColor(report.floodRiskScore, report.categoryLevel);
@@ -374,14 +541,13 @@ export default function MapPage() {
         .addTo(currentMap);
       markers.current.push(marker);
     });
-  }, [reports, activeFilter, handleMarkerClick]);
+  }, [reports, activeReportFilter, handleMarkerClick]);
 
   if (loading || !user) return null;
 
   return (
     <>
       <style>{`
-        /* FRI report markers */
         .fri-marker { cursor: pointer; }
         .fri-bubble {
           display: flex; align-items: center; gap: 4px;
@@ -402,7 +568,6 @@ export default function MapPage() {
           font-size: 11px; font-weight: 700;
         }
 
-        /* user location dot */
         .user-dot-outer {
           position: relative;
           width: 28px; height: 28px;
@@ -432,58 +597,103 @@ export default function MapPage() {
           z-index: 1;
         }
 
-        /* suppress default mapbox controls */
         .mapboxgl-ctrl-bottom-left,
         .mapboxgl-ctrl-bottom-right { display: none !important; }
       `}</style>
 
       <div className="relative h-dvh w-full max-w-md mx-auto overflow-hidden bg-slate-100">
-        {/* search bar */}
         <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12 pb-3 bg-linear-to-b from-white/95 via-white/80 to-transparent pointer-events-none">
           <div className="flex gap-2 pointer-events-auto">
-            <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-md border border-slate-100">
+            <button
+              type="button"
+              onClick={async () => {
+                const q = prompt("Cari lokasi (alamat / nama tempat)");
+                if (!q) return;
+                const r = await forwardGeocode(q);
+                if (!r || !map.current) return;
+                map.current.flyTo({
+                  center: [r.lng, r.lat],
+                  zoom: 15,
+                  duration: 900,
+                });
+                setLocationLabel(
+                  r.label.split(",").slice(0, 2).join(",").trim(),
+                );
+                fetchMapData(r.lat, r.lng);
+              }}
+              className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-md border border-slate-100"
+            >
               <MapPin size={16} className="text-blue-500 shrink-0" />
               <span className="text-sm text-slate-700 font-medium truncate">
                 {locationLabel}
               </span>
-            </div>
+            </button>
+
             <button
               type="button"
               onClick={() => setFilterVisible((v) => !v)}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md"
             >
               <SlidersHorizontal size={18} />
             </button>
+
+            <ForecastToggleButton
+              isActive={showForecast}
+              onClick={handleToggleForecast}
+              isLoading={isFetchingForecast}
+            />
           </div>
 
           {filterVisible && (
             <div className="mt-2 flex gap-2 pointer-events-auto">
-              {(["ALL", "TINGGI", "SEDANG", "RENDAH"] as const).map((f) => (
-                <button
-                  type="button"
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
-                    activeFilter === f
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-slate-600 border border-slate-200",
-                  )}
-                >
-                  {f === "ALL"
-                    ? "Semua"
-                    : f === "TINGGI"
-                      ? "Tinggi"
-                      : f === "SEDANG"
-                        ? "Sedang"
-                        : "Rendah"}
-                </button>
-              ))}
+              {!showForecast
+                ? (["ALL", "TINGGI", "SEDANG", "RENDAH"] as const).map((f) => (
+                    <button
+                      type="button"
+                      key={f}
+                      onClick={() => setActiveReportFilter(f)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
+                        activeReportFilter === f
+                          ? "bg-brand-600 text-white"
+                          : "bg-white text-slate-600 border border-slate-200",
+                      )}
+                    >
+                      {f === "ALL"
+                        ? "Semua"
+                        : f === "TINGGI"
+                          ? "Tinggi"
+                          : f === "SEDANG"
+                            ? "Sedang"
+                            : "Rendah"}
+                    </button>
+                  ))
+                : (
+                    ["ALL", "SANGAT_RAWAN", "RAWAN", "TIDAK_RAWAN"] as const
+                  ).map((f) => (
+                    <button
+                      type="button"
+                      key={f}
+                      onClick={() => setActiveForecastFilter(f)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
+                        activeForecastFilter === f
+                          ? "bg-brand-600 text-white"
+                          : "bg-white text-slate-600 border border-slate-200",
+                      )}
+                    >
+                      {f === "ALL"
+                        ? "Semua"
+                        : f
+                            .replaceAll("_", " ")
+                            .toLowerCase()
+                            .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </button>
+                  ))}
             </div>
           )}
         </div>
 
-        {/* map */}
         <div
           ref={mapContainer}
           className="absolute inset-0 z-0"
@@ -497,21 +707,25 @@ export default function MapPage() {
           onReport={() => router.push("/report/add")}
         />
 
-        <MapLegend show={showLegend} />
+        <MapLegend
+          show={showLegend}
+          items={[
+            { label: "Sangat Rawan", color: "rgba(239,68,68,0.9)" },
+            { label: "Rawan", color: "rgba(245,158,11,0.7)" },
+            { label: "Tidak Rawan", color: "rgba(34,197,94,0.4)" },
+          ]}
+        />
 
-        {/* bottom nav */}
         <div className="absolute bottom-0 left-0 right-0 z-20">
           <AppBottomNav />
         </div>
 
-        {/* bottom sheet (detail cluster) */}
         {selectedCluster && (
           <MapBottomSheet
             selectedCluster={selectedCluster}
             clusterReports={clusterReports}
             sheetLoading={sheetLoading}
             onClose={() => setSelectedCluster(null)}
-            onSelectReport={(id) => router.push(`/report/${id}`)}
             formatRelative={formatRelative}
             getScoreColor={friColor}
           />
