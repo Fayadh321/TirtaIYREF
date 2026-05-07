@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   Info,
   Layers,
-  Lightbulb,
   Loader2,
   MapPin,
   ShieldAlert,
@@ -36,7 +35,7 @@ interface ResultData {
       | "CUKUP_RAWAN"
       | "TIDAK_RAWAN"
       | "UNKNOWN";
-    recommendation: string | null;
+    textAnalysis: string;
     visualizedUrl?: string | null;
     aiMetrics?: {
       ai_metrics: {
@@ -208,7 +207,7 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
         <span className="text-xs font-bold">{label}</span>
         <span className="text-xs font-semibold">{Math.round(value)}</span>
       </div>
-      <div className="h-2 w-full rounded-full">
+      <div className="h-2 w-full rounded-full bg-slate-100">
         <div
           className="h-full rounded-full bg-brand transition-all duration-700"
           style={{ width: `${Math.round(value)}%` }}
@@ -286,7 +285,7 @@ function ReportResultsContent() {
 
   // loading state
   if (loading) {
-    return <></>;
+    return null;
   }
 
   // error state
@@ -463,8 +462,7 @@ function ReportResultsContent() {
           <div className="space-y-1.5">
             <p className="text-sm font-bold text-slate-900">Analisis Risiko:</p>
             <p className="text-xs leading-relaxed text-slate-500">
-              {data.analysis.recommendation ??
-                "Berdasarkan analisis visual dan data lingkungan, area ini menunjukkan potensi risiko banjir yang perlu diperhatikan."}
+              {data.analysis.textAnalysis}
             </p>
           </div>
 
@@ -519,15 +517,15 @@ function ReportResultsContent() {
             <div className="px-5 py-5 space-y-3.5">
               <ScoreBar
                 label="Skor Foto (AI)"
-                value={data.analysis.aiMetrics!.photo_score}
+                value={data.analysis.aiMetrics?.photo_score ?? 0}
               />
               <ScoreBar
                 label="Skor Zona"
-                value={data.analysis.aiMetrics!.zone_score}
+                value={data.analysis.aiMetrics?.zone_score ?? 0}
               />
               <ScoreBar
                 label="Skor Form"
-                value={data.analysis.aiMetrics!.form_score}
+                value={data.analysis.aiMetrics?.form_score ?? 0}
               />
             </div>
 
@@ -539,31 +537,34 @@ function ReportResultsContent() {
                     {
                       label: "Vegetasi",
                       value: pct(
-                        data.analysis.aiMetrics!.ai_metrics.vegetation_ratio,
-                      ),
-                      unit: "area",
-                      cls: "text-blue-500",
-                    },
-                    {
-                      label: "Area Resapan",
-                      value: pct(
-                        data.analysis.aiMetrics!.ai_metrics.impervious_ratio,
-                      ),
-                      unit: "area",
-                      cls: "text-orange-500",
-                    },
-                    {
-                      label: "Permukaan Kedap Air",
-                      value: pct(
-                        data.analysis.aiMetrics!.ai_metrics.vegetation_ratio,
+                        data.analysis.aiMetrics?.ai_metrics.vegetation_ratio ??
+                          0,
                       ),
                       unit: "area",
                       cls: "text-green-500",
                     },
                     {
+                      label: "Area Resapan",
+                      value: pct(
+                        data.analysis.aiMetrics?.ai_metrics.impervious_ratio ??
+                          0,
+                      ),
+                      unit: "area",
+                      cls: "text-orange-700",
+                    },
+                    {
+                      label: "Permukaan Kedap Air",
+                      value: pct(
+                        data.analysis.aiMetrics?.ai_metrics.vegetation_ratio ??
+                          0,
+                      ),
+                      unit: "area",
+                      cls: "text-amber-500",
+                    },
+                    {
                       label: "Kepadatan Bangunan",
                       value: pct(
-                        data.analysis.aiMetrics!.ai_metrics.building_ratio,
+                        data.analysis.aiMetrics?.ai_metrics.building_ratio ?? 0,
                       ),
                       unit: "area",
                       cls: "text-red-500",
@@ -593,26 +594,6 @@ function ReportResultsContent() {
             )}
           </div>
         )}
-        {data.analysis.recommendation && (
-          <div className="space-y-3 pb-2">
-            <p className="text-sm font-semibold text-slate-700 px-1">
-              Saran Aksi
-            </p>
-            <div className="rounded-lg border border-slate-100 bg-white p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <Lightbulb size={14} className="text-brand shrink-0" />
-                <p className="font-semibold text-xs text-brand">
-                  Rekomendasi Strategis
-                </p>
-              </div>
-              <div className="border-l-4 border-brand pl-4">
-                <p className="text-sm leading-relaxed text-slate-700">
-                  {data.analysis.recommendation}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {segmentationUrl && (
           <div className="space-y-3 pb-2">
@@ -640,22 +621,22 @@ function ReportResultsContent() {
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 disabled:opacity-50"
           >
             {isDeleting ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
             ) : (
-              <Trash2 size={20} />
+              <Trash2 size={16} />
             )}
           </button>
           <button
             type="button"
             onClick={handlePublish}
             disabled={isPublishing || isDeleting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand py-3 font-semibold text-md text-white disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand py-2 font-semibold text-sm text-white disabled:opacity-50"
           >
             {isPublishing ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <>
-                Terbitkan
+                Publikasikan
                 <ArrowRight size={16} />
               </>
             )}

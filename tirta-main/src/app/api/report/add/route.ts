@@ -1,7 +1,12 @@
 import { v2 as cloudinary } from "cloudinary";
 import { type NextRequest, NextResponse } from "next/server";
-import { RiskCategory, ZoneRiskLevel } from "@/generated/prisma";
+import { RiskCategory } from "@/generated/prisma";
+import {
+  forecastToZoneRisk,
+  getNearestForecastAverageRisk,
+} from "@/lib/forecast-zone";
 import { prisma } from "@/lib/prisma";
+import { pointInZoneBbox } from "@/lib/zones";
 
 const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
 const FAST_API_URL = process.env.FAST_API_URL;
@@ -111,30 +116,6 @@ function toCategoryLevel(fri: number): RiskCategory {
   if (fri >= 70) return RiskCategory.TINGGI;
   if (fri >= 40) return RiskCategory.SEDANG;
   return RiskCategory.RENDAH;
-}
-
-export function forecastToZoneRisk(avgRisk: number): ZoneRiskLevel {
-  if (avgRisk >= 0.8) return ZoneRiskLevel.SANGAT_RAWAN;
-  if (avgRisk >= 0.3) return ZoneRiskLevel.RAWAN;
-  return ZoneRiskLevel.TIDAK_RAWAN;
-}
-
-export function pointInZoneBbox(
-  lat: number,
-  lng: number,
-  centerLat: number,
-  centerLng: number,
-  radiusM: number,
-): boolean {
-  const latDelta = radiusM / 111000;
-  const lngDelta = radiusM / (111000 * Math.cos((centerLat * Math.PI) / 180));
-
-  return (
-    lat >= centerLat - latDelta &&
-    lat <= centerLat + latDelta &&
-    lng >= centerLng - lngDelta &&
-    lng <= centerLng + lngDelta
-  );
 }
 
 async function uploadToCloudinary(file: File, folder: string): Promise<string> {
@@ -346,7 +327,21 @@ export async function POST(req: NextRequest) {
     nearbyZones.find((z) =>
       pointInZoneBbox(latitude, longitude, z.centerLat, z.centerLng, 500),
     ) ?? null;
-  const avgRisk = matchedZone?.averageRiskScore ?? 0;
+
+  let avgRisk = matchedZone?.averageRiskScore ?? null;
+  let zoneName: string | null = null;
+
+  if (avgRisk == null) {
+    const origin = new URL(req.url).origin;
+    const nearest = await getNearestForecastAverageRisk({
+      origin,
+      lat: latitude,
+      lng: longitude,
+    });
+    avgRisk = nearest?.averageRisk ?? 0;
+    zoneName = nearest?.zoneName ?? null;
+  }
+
   const zoneRiskLevel = forecastToZoneRisk(avgRisk);
   const zoneScore = avgRisk * 100; // 0-100
 
@@ -422,6 +417,7 @@ export async function POST(req: NextRequest) {
           photo_score: photoScore,
           zone_score: zoneScore,
           form_score: formScore,
+          zone_name: zoneName,
         },
         // text analysis is not stored biar ga costly
       },

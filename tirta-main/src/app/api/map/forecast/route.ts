@@ -6,16 +6,13 @@ if (!FAST_API_URL) {
   throw new Error("Missing FORECAST_API_URL environment variable");
 }
 
-
 export async function GET() {
   try {
-    const response = await fetch(`${FAST_API_URL}/models/forecast`,
-      {
-        next: {
-          revalidate: 3600,
-        },
+    const response = await fetch(`${FAST_API_URL}/models/forecast`, {
+      next: {
+        revalidate: 3600,
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error("Gagal mengambil data dari server ML");
@@ -23,7 +20,7 @@ export async function GET() {
 
     const forecastJson = await response.json();
 
-    const features = forecastJson.data.map((grid: any) => ({
+    const features = (forecastJson.data as ForecastGrid[]).map((grid) => ({
       type: "Feature",
       geometry: {
         type: "Point",
@@ -55,3 +52,15 @@ export async function GET() {
     );
   }
 }
+
+type ForecastGrid = {
+  grid_id: string;
+  lat: number;
+  lon: number;
+  risk_score_month1: number;
+  risk_score_month2: number;
+  risk_score_month3: number;
+  average_risk: number;
+  highest_risk_score: number;
+  category_month1: string;
+};

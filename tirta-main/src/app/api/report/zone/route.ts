@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { ZoneRiskLevel } from "@/generated/prisma";
-import { prisma } from "@/lib/prisma";
-import { forecastToZoneRisk, pointInZoneBbox } from "../add/route";
+
+import {
+  forecastToZoneRisk,
+  getNearestForecastAverageRisk,
+} from "@/lib/forecast-zone";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const lng = Number(searchParams.get("lng"));
 
-  if (!lat || !lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return NextResponse.json(
       {
         error: "Missing coordinates",
@@ -21,48 +23,40 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const nearbyZones = await prisma.floodZone.findMany({
-    where: {
-      centerLat: {
-        gte: lat - 0.2,
-        lte: lat + 0.2,
-      },
-
-      centerLng: {
-        gte: lng - 0.2,
-        lte: lng + 0.2,
-      },
-    },
-
-    select: {
-      id: true,
-      name: true,
-      centerLat: true,
-      centerLng: true,
-      averageRiskScore: true,
-    },
-  });
-
-  const matchedZone =
-    nearbyZones.find((z) =>
-      pointInZoneBbox(lat, lng, z.centerLat, z.centerLng, 500),
-    ) ?? null;
-
-  if (!matchedZone) {
-    return NextResponse.json({
-      riskLevel: "UNKNOWN",
-      averageRiskScore: 0,
-      zoneName: null,
+  try {
+    const origin = new URL(req.url).origin;
+    const nearest = await getNearestForecastAverageRisk({
+      origin,
+      lat,
+      lng,
     });
+
+    if (!nearest) {
+      return NextResponse.json({
+        riskLevel: "UNKNOWN",
+        averageRiskScore: 0,
+        zoneName: null,
+      });
+    }
+
+    const avgRisk = nearest.averageRisk;
+    const riskLevel = forecastToZoneRisk(avgRisk);
+
+    return NextResponse.json({
+      riskLevel,
+      averageRiskScore: avgRisk,
+      zoneName: nearest.zoneName,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to fetch zone risk",
+      },
+      {
+        status: 500,
+      },
+    );
   }
-
-  const avgRisk = matchedZone.averageRiskScore ?? 0;
-
-  const riskLevel = forecastToZoneRisk(avgRisk);
-
-  return NextResponse.json({
-    riskLevel,
-    averageRiskScore: avgRisk,
-    zoneName: matchedZone.name,
-  });
 }

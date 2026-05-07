@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppBottomNav } from "@/components/app-bottom-nav";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
-// IMPORT KOMPONEN BARU DI SINI
 import { ForecastToggleButton } from "./components/forecast-toggle-button";
 import { MapActionButtons } from "./components/map-actions";
 import { MapBottomSheet } from "./components/map-bottom-sheets";
@@ -33,6 +32,7 @@ interface ClusterReport {
   title: string | null;
   address: string | null;
   reportedAt: string;
+  imageUrl?: string | null;
   floodRiskScore: number;
   categoryLevel: "TINGGI" | "SEDANG" | "RENDAH" | null;
   user: { name: string | null; photoURL: string | null };
@@ -97,17 +97,23 @@ export default function MapPage() {
   const [clusterReports, setClusterReports] = useState<ClusterReport[]>([]);
   const [sheetLoading, setSheetLoading] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [activeReportFilter, setActiveReportFilter] = useState<
+    "ALL" | "TINGGI" | "SEDANG" | "RENDAH"
+  >("ALL");
+  const [activeForecastFilter, setActiveForecastFilter] = useState<
+    "ALL" | "SANGAT_RAWAN" | "RAWAN" | "TIDAK_RAWAN"
+  >("ALL");
   const [userCoords, setUserCoords] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
   const [showLegend, setShowLegend] = useState(false);
 
-  // STATE BARU UNTUK FORECAST
   const [showForecast, setShowForecast] = useState(false);
   const [isFetchingForecast, setIsFetchingForecast] = useState(false);
   const [forecastData, setForecastData] =
+    useState<GeoJSON.FeatureCollection | null>(null);
+  const [forecastFiltered, setForecastFiltered] =
     useState<GeoJSON.FeatureCollection | null>(null);
 
   const headingRef = useRef<number>(0);
@@ -142,7 +148,6 @@ export default function MapPage() {
     }
   }, []);
 
-  // FUNGSI BARU UNTUK TOGGLE FORECAST
   const handleToggleForecast = useCallback(async () => {
     if (!forecastData && !showForecast) {
       setIsFetchingForecast(true);
@@ -160,6 +165,21 @@ export default function MapPage() {
     }
     setShowForecast((prev) => !prev);
   }, [forecastData, showForecast]);
+
+  const forwardGeocode = useCallback(async (query: string) => {
+    const q = query.trim();
+    if (!q) return null;
+    const res = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        q,
+      )}.json?types=address,poi,place,locality,neighborhood&language=id&access_token=${mapboxToken}`,
+    );
+    const data = await res.json();
+    const feature = data.features?.[0];
+    if (!feature?.center?.length) return null;
+    const [lng, lat] = feature.center as [number, number];
+    return { lat, lng, label: feature.place_name as string };
+  }, []);
 
   const syncUserMarker = useCallback(
     (lat: number, lng: number, bearing: number) => {
@@ -342,9 +362,45 @@ export default function MapPage() {
     waitReady();
   }, [zones]);
 
+  const forecastRiskLevel = useCallback((score: number) => {
+    if (score >= 0.8) return "SANGAT_RAWAN" as const;
+    if (score >= 0.3) return "RAWAN" as const;
+    return "TIDAK_RAWAN" as const;
+  }, []);
+
+  useEffect(() => {
+    if (!forecastData) {
+      setForecastFiltered(null);
+      return;
+    }
+
+    if (activeForecastFilter === "ALL") {
+      setForecastFiltered(forecastData);
+      return;
+    }
+
+    const features = (forecastData.features ?? []).filter((f) => {
+      const props = (f as GeoJSON.Feature).properties as
+        | Record<string, unknown>
+        | null
+        | undefined;
+
+      const score =
+        (props?.highest_risk_score as number | undefined) ??
+        (props?.average_risk as number | undefined) ??
+        0;
+      return forecastRiskLevel(Number(score) || 0) === activeForecastFilter;
+    });
+
+    setForecastFiltered({
+      type: "FeatureCollection",
+      features,
+    } as GeoJSON.FeatureCollection);
+  }, [forecastData, activeForecastFilter, forecastRiskLevel]);
+
   // USE EFFECT BARU: RENDER FORECAST GRID SEBAGAI HEATMAP
   useEffect(() => {
-    if (!map.current || !forecastData) return;
+    if (!map.current || !forecastFiltered) return;
 
     const sourceId = "forecast-grid-source";
     const layerId = "forecast-grid-layer";
@@ -358,7 +414,7 @@ export default function MapPage() {
       if (!map.current?.getSource(sourceId)) {
         map.current?.addSource(sourceId, {
           type: "geojson",
-          data: forecastData,
+          data: forecastFiltered,
         });
 
         map.current?.addLayer({
@@ -421,6 +477,8 @@ export default function MapPage() {
           },
         });
       } else {
+        const src = map.current?.getSource(sourceId) as mapboxgl.GeoJSONSource;
+        src?.setData(forecastFiltered as GeoJSON.FeatureCollection);
         map.current?.setLayoutProperty(
           layerId,
           "visibility",
@@ -430,7 +488,7 @@ export default function MapPage() {
     };
 
     waitReady();
-  }, [forecastData, showForecast]);
+  }, [forecastFiltered, showForecast]);
 
   const handleMarkerClick = useCallback(async (report: MapReport) => {
     setSelectedCluster(report);
@@ -454,9 +512,9 @@ export default function MapPage() {
     markers.current = [];
 
     const filtered =
-      activeFilter === "ALL"
+      activeReportFilter === "ALL"
         ? reports
-        : reports.filter((r) => r.categoryLevel === activeFilter);
+        : reports.filter((r) => r.categoryLevel === activeReportFilter);
 
     filtered.forEach((report) => {
       const color = friColor(report.floodRiskScore, report.categoryLevel);
@@ -483,7 +541,7 @@ export default function MapPage() {
         .addTo(currentMap);
       markers.current.push(marker);
     });
-  }, [reports, activeFilter, handleMarkerClick]);
+  }, [reports, activeReportFilter, handleMarkerClick]);
 
   if (loading || !user) return null;
 
@@ -546,17 +604,35 @@ export default function MapPage() {
       <div className="relative h-dvh w-full max-w-md mx-auto overflow-hidden bg-slate-100">
         <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-12 pb-3 bg-linear-to-b from-white/95 via-white/80 to-transparent pointer-events-none">
           <div className="flex gap-2 pointer-events-auto">
-            <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-md border border-slate-100">
+            <button
+              type="button"
+              onClick={async () => {
+                const q = prompt("Cari lokasi (alamat / nama tempat)");
+                if (!q) return;
+                const r = await forwardGeocode(q);
+                if (!r || !map.current) return;
+                map.current.flyTo({
+                  center: [r.lng, r.lat],
+                  zoom: 15,
+                  duration: 900,
+                });
+                setLocationLabel(
+                  r.label.split(",").slice(0, 2).join(",").trim(),
+                );
+                fetchMapData(r.lat, r.lng);
+              }}
+              className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-md border border-slate-100"
+            >
               <MapPin size={16} className="text-blue-500 shrink-0" />
               <span className="text-sm text-slate-700 font-medium truncate">
                 {locationLabel}
               </span>
-            </div>
+            </button>
 
             <button
               type="button"
               onClick={() => setFilterVisible((v) => !v)}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md"
             >
               <SlidersHorizontal size={18} />
             </button>
@@ -570,27 +646,50 @@ export default function MapPage() {
 
           {filterVisible && (
             <div className="mt-2 flex gap-2 pointer-events-auto">
-              {(["ALL", "TINGGI", "SEDANG", "RENDAH"] as const).map((f) => (
-                <button
-                  type="button"
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
-                    activeFilter === f
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-slate-600 border border-slate-200",
-                  )}
-                >
-                  {f === "ALL"
-                    ? "Semua"
-                    : f === "TINGGI"
-                      ? "Tinggi"
-                      : f === "SEDANG"
-                        ? "Sedang"
-                        : "Rendah"}
-                </button>
-              ))}
+              {!showForecast
+                ? (["ALL", "TINGGI", "SEDANG", "RENDAH"] as const).map((f) => (
+                    <button
+                      type="button"
+                      key={f}
+                      onClick={() => setActiveReportFilter(f)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
+                        activeReportFilter === f
+                          ? "bg-brand-600 text-white"
+                          : "bg-white text-slate-600 border border-slate-200",
+                      )}
+                    >
+                      {f === "ALL"
+                        ? "Semua"
+                        : f === "TINGGI"
+                          ? "Tinggi"
+                          : f === "SEDANG"
+                            ? "Sedang"
+                            : "Rendah"}
+                    </button>
+                  ))
+                : (
+                    ["ALL", "SANGAT_RAWAN", "RAWAN", "TIDAK_RAWAN"] as const
+                  ).map((f) => (
+                    <button
+                      type="button"
+                      key={f}
+                      onClick={() => setActiveForecastFilter(f)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all",
+                        activeForecastFilter === f
+                          ? "bg-brand-600 text-white"
+                          : "bg-white text-slate-600 border border-slate-200",
+                      )}
+                    >
+                      {f === "ALL"
+                        ? "Semua"
+                        : f
+                            .replaceAll("_", " ")
+                            .toLowerCase()
+                            .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </button>
+                  ))}
             </div>
           )}
         </div>
@@ -608,21 +707,25 @@ export default function MapPage() {
           onReport={() => router.push("/report/add")}
         />
 
-        <MapLegend show={showLegend} />
+        <MapLegend
+          show={showLegend}
+          items={[
+            { label: "Sangat Rawan", color: "rgba(239,68,68,0.9)" },
+            { label: "Rawan", color: "rgba(245,158,11,0.7)" },
+            { label: "Tidak Rawan", color: "rgba(34,197,94,0.4)" },
+          ]}
+        />
 
-        {/* bottom nav */}
         <div className="absolute bottom-0 left-0 right-0 z-20">
           <AppBottomNav />
         </div>
 
-        {/* bottom sheet (detail cluster) */}
         {selectedCluster && (
           <MapBottomSheet
             selectedCluster={selectedCluster}
             clusterReports={clusterReports}
             sheetLoading={sheetLoading}
             onClose={() => setSelectedCluster(null)}
-            onSelectReport={(id) => router.push(`/report/${id}`)}
             formatRelative={formatRelative}
             getScoreColor={friColor}
           />

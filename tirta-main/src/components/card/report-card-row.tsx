@@ -63,7 +63,7 @@ export function ReportCardRow({
   const isDraft = status === "DRAFT";
   const hasBadge = (showRiskLabel && riskCategory) || isDraft;
   const badgeBgColor = isDraft
-    ? "bg-amber-500"
+    ? "bg-slate-400"
     : riskCategory
       ? RISK_BG_COLOR[riskCategory]
       : "bg-slate-400";
@@ -89,7 +89,7 @@ export function ReportCardRow({
       }
       className={cn(
         "relative flex w-full items-center gap-3.5 rounded-2xl bg-white px-3.5 py-3 text-left border active:scale-[0.98] transition-transform duration-150",
-        isDraft && "border-amber-200 bg-amber-50/10",
+        isDraft && "border-slate-200 bg-slate-100",
         className,
       )}
     >

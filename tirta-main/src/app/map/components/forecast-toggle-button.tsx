@@ -22,11 +22,10 @@ export function ForecastToggleButton({
       className={cn(
         "flex h-12 w-12 items-center justify-center rounded-2xl shadow-md transition-all active:scale-95",
         isActive
-          ? "bg-indigo-600 text-white"
+          ? "bg-brand-600 text-white"
           : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
         isLoading && "opacity-70 cursor-not-allowed",
       )}
-      title="Tampilkan Zona Prediksi Banjir"
     >
       <Activity size={20} className={cn(isLoading && "animate-pulse")} />
     </button>

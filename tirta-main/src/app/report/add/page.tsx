@@ -295,6 +295,12 @@ export default function ReportAddPage() {
             longitude={coords?.lng ?? null}
             address={address}
           />
+          {zoneRisk && (
+            <p className="mt-2 px-1 text-[11px] font-semibold text-slate-400">
+              skor zona: {Math.round((zoneRisk.averageRiskScore ?? 0) * 100)}
+              /100
+            </p>
+          )}
         </div>
 
         <ReportBreadcrumbs currentStep={step} />
