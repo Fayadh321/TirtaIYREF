@@ -23,9 +23,8 @@ model FloodZone {
     name            String
     boundary        Json  
     centerLat       Float
-    centerLng       Float
-    riskCategory    ZoneRiskLevel     @default(UNKNOWN)
-    // predictionScore Float?         
+    centerLng       Float         
+    averageRiskScore Float?
     lastPredictedAt DateTime?
     reports         UserReport[]
     createdAt       DateTime          @default(now())
@@ -35,7 +34,6 @@ model FloodZone {
 enum ZoneRiskLevel {
     SANGAT_RAWAN
     RAWAN
-    CUKUP_RAWAN
     TIDAK_RAWAN
     UNKNOWN
 }
@@ -78,6 +76,7 @@ model UserReport {
     analysis          ReportAnalysis?
     floodHistory      ReportFloodHistory[]
 
+    status            ReportStatus       @default(DRAFT)
     createdAt         DateTime           @default(now())
     updatedAt         DateTime           @updatedAt
 
@@ -85,6 +84,11 @@ model UserReport {
     @@index([userId])
     @@index([zoneId])
     @@index([reportedAt])
+}
+
+enum ReportStatus {
+    DRAFT
+    PUBLISHED
 }
 
 enum DrainageQuality {
@@ -139,6 +143,7 @@ model ReportPhoto {
     detectedObjects Json?
     measuredLengthM Float?
     hasVegetation   Boolean?
+    visualizedUrl   String?
     createdAt       DateTime      @default(now())
 
     @@index([reportId])
@@ -175,7 +180,9 @@ model ReportAnalysis {
     floodRiskScore    Float        // FRI
     riskLevel         ZoneRiskLevel
     categoryLevel     RiskCategory    
-    recommendation    String?
+    analysisMetrics   Json?         
+    // textAnalysis      String? // biar ga costly
+    visualizedUrl     String?
 
     createdAt         DateTime      @default(now())
     updatedAt         DateTime      @updatedAt
