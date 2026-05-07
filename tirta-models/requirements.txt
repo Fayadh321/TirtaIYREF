@@ -15,4 +15,5 @@ seaborn
 nbformat
 scipy
 python-dotenv
-cloudinarypython-dotenv
+cloudinary
+python-dotenv
